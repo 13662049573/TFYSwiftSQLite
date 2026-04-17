@@ -23,7 +23,7 @@
 或在其它 Package 中依赖：
 
 ```swift
-.package(url: "https://github.com/13662049573/TFYSwiftSQLite.git", from: "0.1.0"),
+.package(url: "https://github.com/13662049573/TFYSwiftSQLite.git", from: "1.0.0"),
 ```
 
 ```swift
@@ -36,7 +36,7 @@
 ### CocoaPods
 
 ```ruby
-pod 'TFYSwiftSQLiteKit', '~> 0.1.0'
+pod 'TFYSwiftSQLiteKit', '~> 1.0.0'
 ```
 
 版本号与 `TFYSwiftSQLiteKit.podspec` 中 `s.version` 保持一致；发版时请打对应 git tag。
