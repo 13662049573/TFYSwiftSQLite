@@ -6,8 +6,28 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		0FB2177856900E2280294803 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A5F83CC6537CDFA579AE241D /* Foundation.framework */; };
+		1742D3BC5F9E96CA3D26C552 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D32304F00FA3573709DCCC0B /* XCTest.framework */; };
+		8E97C067234392D17A7B2069 /* TFYSwiftSQLiteKitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD08FCE2192639697FD280F5 /* TFYSwiftSQLiteKitTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		444E9CD2472809B74A5399E7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8496ACEF2F92306C0052E441 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8496ACF62F92306C0052E441;
+			remoteInfo = TFYSwiftSQLite;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		66F43968613C6BC8F6F9715D /* TFYSwiftSQLiteTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TFYSwiftSQLiteTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8496ACF72F92306C0052E441 /* TFYSwiftSQLite.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TFYSwiftSQLite.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A5F83CC6537CDFA579AE241D /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		BD08FCE2192639697FD280F5 /* TFYSwiftSQLiteKitTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TFYSwiftSQLiteKitTests.swift; sourceTree = "<group>"; };
+		D32304F00FA3573709DCCC0B /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -39,14 +59,33 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BEF7F31215ECE8D5D382C2A5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0FB2177856900E2280294803 /* Foundation.framework in Frameworks */,
+				1742D3BC5F9E96CA3D26C552 /* XCTest.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		5EFE538E8C20B8F0D1011A68 /* TFYSwiftSQLiteTests */ = {
+			isa = PBXGroup;
+			children = (
+				BD08FCE2192639697FD280F5 /* TFYSwiftSQLiteKitTests.swift */,
+			);
+			path = TFYSwiftSQLiteTests;
+			sourceTree = "<group>";
+		};
 		8496ACEE2F92306C0052E441 = {
 			isa = PBXGroup;
 			children = (
 				8496ACF92F92306C0052E441 /* TFYSwiftSQLite */,
 				8496ACF82F92306C0052E441 /* Products */,
+				AA2AD52D61234AB69BAB8881 /* Frameworks */,
+				5EFE538E8C20B8F0D1011A68 /* TFYSwiftSQLiteTests */,
 			);
 			sourceTree = "<group>";
 		};
@@ -54,8 +93,26 @@
 			isa = PBXGroup;
 			children = (
 				8496ACF72F92306C0052E441 /* TFYSwiftSQLite.app */,
+				66F43968613C6BC8F6F9715D /* TFYSwiftSQLiteTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		8A7F6379655A639F0D59BBD7 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				A5F83CC6537CDFA579AE241D /* Foundation.framework */,
+				D32304F00FA3573709DCCC0B /* XCTest.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
+		AA2AD52D61234AB69BAB8881 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				8A7F6379655A639F0D59BBD7 /* iOS */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -77,11 +134,27 @@
 				8496ACF92F92306C0052E441 /* TFYSwiftSQLite */,
 			);
 			name = TFYSwiftSQLite;
-			packageProductDependencies = (
-			);
 			productName = TFYSwiftSQLite;
 			productReference = 8496ACF72F92306C0052E441 /* TFYSwiftSQLite.app */;
 			productType = "com.apple.product-type.application";
+		};
+		D575607CCEA0EC05AB175CAE /* TFYSwiftSQLiteTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 14251B3F0A9ED8B93F7C4C63 /* Build configuration list for PBXNativeTarget "TFYSwiftSQLiteTests" */;
+			buildPhases = (
+				25AEFC8CA2BD30248B6DF368 /* Sources */,
+				BEF7F31215ECE8D5D382C2A5 /* Frameworks */,
+				4E11F8ED83BBF3164215840D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CEFE3EF64DDFD324B40B771C /* PBXTargetDependency */,
+			);
+			name = TFYSwiftSQLiteTests;
+			productName = TFYSwiftSQLiteTests;
+			productReference = 66F43968613C6BC8F6F9715D /* TFYSwiftSQLiteTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -95,6 +168,10 @@
 				TargetAttributes = {
 					8496ACF62F92306C0052E441 = {
 						CreatedOnToolsVersion = 26.4;
+					};
+					D575607CCEA0EC05AB175CAE = {
+						CreatedOnToolsVersion = 26.4;
+						TestTargetID = 8496ACF62F92306C0052E441;
 					};
 				};
 			};
@@ -113,11 +190,19 @@
 			projectRoot = "";
 			targets = (
 				8496ACF62F92306C0052E441 /* TFYSwiftSQLite */,
+				D575607CCEA0EC05AB175CAE /* TFYSwiftSQLiteTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		4E11F8ED83BBF3164215840D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8496ACF52F92306C0052E441 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -128,6 +213,14 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		25AEFC8CA2BD30248B6DF368 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8E97C067234392D17A7B2069 /* TFYSwiftSQLiteKitTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8496ACF32F92306C0052E441 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -137,7 +230,71 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		CEFE3EF64DDFD324B40B771C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = TFYSwiftSQLite;
+			target = 8496ACF62F92306C0052E441 /* TFYSwiftSQLite */;
+			targetProxy = 444E9CD2472809B74A5399E7 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		31E03D6CE63D5E9EE027AA41 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QH95759TSS;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Daily.vest.bag.company.TFYSwiftSQLite.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TFYSwiftSQLite.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/TFYSwiftSQLite";
+				TEST_TARGET_NAME = TFYSwiftSQLite;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		6148A3BEB92BBFEFC112B018 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QH95759TSS;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Daily.vest.bag.company.TFYSwiftSQLite.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TFYSwiftSQLite.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/TFYSwiftSQLite";
+				TEST_TARGET_NAME = TFYSwiftSQLite;
+			};
+			name = Debug;
+		};
 		8496AD0B2F92306E0052E441 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -261,6 +418,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -318,6 +476,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -326,6 +485,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		14251B3F0A9ED8B93F7C4C63 /* Build configuration list for PBXNativeTarget "TFYSwiftSQLiteTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				31E03D6CE63D5E9EE027AA41 /* Release */,
+				6148A3BEB92BBFEFC112B018 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		8496ACF22F92306C0052E441 /* Build configuration list for PBXProject "TFYSwiftSQLite" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
