@@ -13,8 +13,8 @@ Pod::Spec.new do |s|
 
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
 
-  s.author           = { '田风有' => '' }
-  
+  s.author           = { '田风有' => '420144542@qq.com' }
+
   s.source           = { :git => 'https://github.com/13662049573/TFYSwiftSQLite.git', :tag => s.version.to_s }
 
   s.swift_version    = '5.0'
