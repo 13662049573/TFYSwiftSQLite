@@ -103,7 +103,7 @@ TFYSwiftSQLite/TFYSwiftSQLiteKit/
 ## 系统要求
 
 - Swift 5.0+
-- **SPM / CocoaPods**：iOS 13+、macOS 10.15+、tvOS 13+、watchOS 6+（与 `Package.swift`、`podspec` 一致）
+- **SPM / CocoaPods**：iOS 15+、macOS 13.5+、tvOS 15+、watchOS 8+（与 `Package.swift`、`podspec` 一致）
 - 示例 Xcode 工程内应用目标的 **IPHONEOS_DEPLOYMENT_TARGET** 可能与上述不同，以工程设置为准
 
 ## 许可
