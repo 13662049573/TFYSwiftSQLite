@@ -32,28 +32,34 @@ Pod::Spec.new do |s|
 
   kit = 'TFYSwiftSQLite/TFYSwiftSQLiteKit'
 
-  # TFYSwiftSQLiteKit/
-  #   Annotation/
-  #   Core/
-  #   Manager/
-  #   ORM/
-  #   Reflection/
-  #   Schema/
-  #   Utils/
-  # 源码按上述目录存放；编译入口为 Base（整包同一模块）。各目录名 subspec 依赖 Base，避免按目录拆编译时的交叉引用与 CocoaPods subspec 循环依赖。
+  s.default_subspecs = 'Annotation', 'Core', 'Manager', 'ORM', 'Reflection', 'Schema', 'Utils'
 
-  s.subspec 'Base' do |ss|
-    ss.source_files = "#{kit}/**/*.swift"
+  s.subspec 'Annotation' do |ss|
+    ss.source_files = "#{kit}/Annotation/**/*.swift"
+  end
+
+  s.subspec 'Core' do |ss|
+    ss.source_files = "#{kit}/Core/**/*.swift"
     ss.libraries    = 'sqlite3'
   end
 
-  folders = %w[Annotation Core Manager ORM Reflection Schema Utils]
-
-  folders.each do |folder|
-    s.subspec folder do |ss|
-      ss.dependency 'TFYSwiftSQLiteKit/Base'
-    end
+  s.subspec 'Manager' do |ss|
+    ss.source_files = "#{kit}/Manager/**/*.swift"
   end
 
-  s.default_subspecs = 'Base'
+  s.subspec 'ORM' do |ss|
+    ss.source_files = "#{kit}/ORM/**/*.swift"
+  end
+
+  s.subspec 'Reflection' do |ss|
+    ss.source_files = "#{kit}/Reflection/**/*.swift"
+  end
+
+  s.subspec 'Schema' do |ss|
+    ss.source_files = "#{kit}/Schema/**/*.swift"
+  end
+
+  s.subspec 'Utils' do |ss|
+    ss.source_files = "#{kit}/Utils/**/*.swift"
+  end
 end
