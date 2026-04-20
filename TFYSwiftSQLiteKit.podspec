@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
   s.name             = 'TFYSwiftSQLiteKit'
 
-  s.version          = '1.0.0'
+  s.version          = '1.0.1'
 
   s.summary          = 'Swift ORM layer on SQLite3 with property-wrapper schema and migrations.'
 
@@ -29,37 +29,8 @@ Pod::Spec.new do |s|
   s.watchos.deployment_target  = '8.0'
 
   s.frameworks       = 'Foundation'
+  s.libraries        = 'sqlite3'
 
   kit = 'TFYSwiftSQLite/TFYSwiftSQLiteKit'
-
-  s.default_subspecs = 'Annotation', 'Core', 'Manager', 'ORM', 'Reflection', 'Schema', 'Utils'
-
-  s.subspec 'Annotation' do |ss|
-    ss.source_files = "#{kit}/Annotation/**/*.swift"
-  end
-
-  s.subspec 'Core' do |ss|
-    ss.source_files = "#{kit}/Core/**/*.swift"
-    ss.libraries    = 'sqlite3'
-  end
-
-  s.subspec 'Manager' do |ss|
-    ss.source_files = "#{kit}/Manager/**/*.swift"
-  end
-
-  s.subspec 'ORM' do |ss|
-    ss.source_files = "#{kit}/ORM/**/*.swift"
-  end
-
-  s.subspec 'Reflection' do |ss|
-    ss.source_files = "#{kit}/Reflection/**/*.swift"
-  end
-
-  s.subspec 'Schema' do |ss|
-    ss.source_files = "#{kit}/Schema/**/*.swift"
-  end
-
-  s.subspec 'Utils' do |ss|
-    ss.source_files = "#{kit}/Utils/**/*.swift"
-  end
+  s.source_files     = "#{kit}/**/*.swift"
 end

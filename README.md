@@ -23,7 +23,7 @@
 或在其它 Package 中依赖：
 
 ```swift
-.package(url: "https://github.com/13662049573/TFYSwiftSQLite.git", from: "1.0.0"),
+.package(url: "https://github.com/13662049573/TFYSwiftSQLite.git", from: "1.0.1"),
 ```
 
 ```swift
@@ -36,8 +36,10 @@
 ### CocoaPods
 
 ```ruby
-pod 'TFYSwiftSQLiteKit', '~> 1.0.0'
+pod 'TFYSwiftSQLiteKit', '~> 1.0.1'
 ```
+
+`TFYSwiftSQLiteKit` 的 pod 会一次性包含 `Annotation`、`Core`、`Manager`、`ORM`、`Reflection`、`Schema`、`Utils` 全部目录源码，并自动链接 `sqlite3`。当前不需要额外选择 subspec。
 
 版本号与 `TFYSwiftSQLiteKit.podspec` 中 `s.version` 保持一致；发版时请打对应 git tag。
 
@@ -92,18 +94,25 @@ try u.delete()
 ```
 TFYSwiftSQLite/TFYSwiftSQLiteKit/
 ├── Annotation/       # 列注解与属性包装器
-├── Core/               # 连接、语句、错误
-├── Manager/            # TFYSwiftDatabaseCenter
-├── ORM/                # 模型协议、ORM、表构建
-├── Reflection/         # 反射与 schema
-├── Schema/             # 迁移、索引、AutoTable
-└── Utils/              # 类型映射等
+├── Core/             # 连接、语句、错误
+├── Manager/          # TFYSwiftDatabaseCenter
+├── ORM/              # 模型协议、ORM、表构建
+├── Reflection/       # 反射与 schema
+├── Schema/           # 迁移、索引、AutoTable
+└── Utils/            # 类型映射、benchmark 等
 ```
+
+## 发布说明
+
+- Swift Package：由 `Package.swift` 暴露单一产品 `TFYSwiftSQLiteKit`
+- CocoaPods：由 `TFYSwiftSQLiteKit.podspec` 直接收录 `TFYSwiftSQLite/TFYSwiftSQLiteKit` 下全部 Swift 文件
+- 示例 app / tests / benchmark 仍位于 `TFYSwiftSQLite.xcodeproj`
 
 ## 系统要求
 
 - Swift 5.0+
-- **SPM / CocoaPods**：iOS 15+、macOS 13.5+、tvOS 15+、watchOS 8+（与 `Package.swift`、`podspec` 一致）
+- **Swift Package Manager**：iOS 13+、macOS 10.15+、tvOS 13+、watchOS 6+
+- **CocoaPods**：iOS 15+、macOS 13.5+、tvOS 15+、watchOS 8+
 - 示例 Xcode 工程内应用目标的 **IPHONEOS_DEPLOYMENT_TARGET** 可能与上述不同，以工程设置为准
 
 ## 许可

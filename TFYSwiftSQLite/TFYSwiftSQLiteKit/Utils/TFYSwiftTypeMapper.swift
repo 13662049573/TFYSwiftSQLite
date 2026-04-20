@@ -1,21 +1,21 @@
 import Foundation
 
 public protocol TFYAnyOptional {
-    var wrappedAny: Any? { get }
+    nonisolated var wrappedAny: Any? { get }
 }
 
 extension Optional: TFYAnyOptional {
-    public var wrappedAny: Any? { self }
+    public nonisolated var wrappedAny: Any? { self }
 }
 
 public struct TFYAnyEncodable: Encodable {
     private let encodeClosure: (Encoder) throws -> Void
 
-    public init(_ value: any Encodable) {
+    public nonisolated init(_ value: any Encodable) {
         encodeClosure = value.encode(to:)
     }
 
-    public func encode(to encoder: Encoder) throws {
+    public nonisolated func encode(to encoder: Encoder) throws {
         try encodeClosure(encoder)
     }
 }

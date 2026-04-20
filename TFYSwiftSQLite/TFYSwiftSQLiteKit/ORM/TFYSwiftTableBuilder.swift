@@ -2,10 +2,14 @@ import Foundation
 
 public enum TFYSwiftTableBuilder {
     public nonisolated static func createTableSQL(for schema: TFYSwiftModelSchema) -> String {
+        createTableSQL(for: schema, tableName: schema.tableName)
+    }
+
+    public nonisolated static func createTableSQL(for schema: TFYSwiftModelSchema, tableName: String) -> String {
         let definitions = schema.persistedColumns.map(columnDefinition(for:))
         let body = definitions.joined(separator: ",\n")
         return """
-        CREATE TABLE IF NOT EXISTS \(TFYSwiftSQL.escapeIdentifier(schema.tableName)) (
+        CREATE TABLE IF NOT EXISTS \(TFYSwiftSQL.escapeIdentifier(tableName)) (
         \(body)
         );
         """

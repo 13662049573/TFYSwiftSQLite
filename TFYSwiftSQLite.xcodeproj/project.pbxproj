@@ -9,7 +9,14 @@
 /* Begin PBXBuildFile section */
 		0FB2177856900E2280294803 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A5F83CC6537CDFA579AE241D /* Foundation.framework */; };
 		1742D3BC5F9E96CA3D26C552 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D32304F00FA3573709DCCC0B /* XCTest.framework */; };
+		1A2B3C4D5E6F700100000001 /* TFYSwiftSQLiteKit in Frameworks */ = {isa = PBXBuildFile; productRef = 1A2B3C4D5E6F700100000007 /* TFYSwiftSQLiteKit */; };
+		1A2B3C4D5E6F700100000002 /* TFYSwiftSQLiteKit in Frameworks */ = {isa = PBXBuildFile; productRef = 1A2B3C4D5E6F700100000007 /* TFYSwiftSQLiteKit */; };
+		1A2B3C4D5E6F700100000003 /* TFYSwiftSQLiteKit in Frameworks */ = {isa = PBXBuildFile; productRef = 1A2B3C4D5E6F700100000007 /* TFYSwiftSQLiteKit */; };
+		1A2B3C4D5E6F700100000004 /* TestModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F700100000005 /* TestModels.swift */; };
+		81F68ADB07EF645DE4CCFB28 /* BenchmarkModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B38583E5CC28C5D2546CDEB /* BenchmarkModels.swift */; };
 		8E97C067234392D17A7B2069 /* TFYSwiftSQLiteKitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD08FCE2192639697FD280F5 /* TFYSwiftSQLiteKitTests.swift */; };
+		933A1D0219B7A0D739B586E0 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B4658D2C07F1D00BC4A80FE /* main.swift */; };
+		B042E6015F655271ADAC4611 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 949538A300E54BA9FB605A3A /* Cocoa.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -23,11 +30,33 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		021010F83CEBCDD388A79DEC /* TFYSwiftSQLiteBenchmarks */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = TFYSwiftSQLiteBenchmarks; sourceTree = BUILT_PRODUCTS_DIR; };
+		1A2B3C4D5E6F700100000005 /* TestModels.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TestModels.swift; sourceTree = "<group>"; };
+		40407E33E38FB3DA399BD5D2 /* TFYSwiftDBStatement.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TFYSwiftDBStatement.swift; path = TFYSwiftSQLite/TFYSwiftSQLiteKit/Core/TFYSwiftDBStatement.swift; sourceTree = "<group>"; };
+		4B4658D2C07F1D00BC4A80FE /* main.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = main.swift; path = TFYSwiftSQLiteBenchmarks/main.swift; sourceTree = "<group>"; };
+		4C1E230220878FC8CB5C7C0C /* TFYSwiftBenchmark.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TFYSwiftBenchmark.swift; path = TFYSwiftSQLite/TFYSwiftSQLiteKit/Utils/TFYSwiftBenchmark.swift; sourceTree = "<group>"; };
+		551B62C162F718A122BF3AF9 /* TFYSwiftORM.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TFYSwiftORM.swift; path = TFYSwiftSQLite/TFYSwiftSQLiteKit/ORM/TFYSwiftORM.swift; sourceTree = "<group>"; };
+		62CB4E8D6209639DE3190AA0 /* TFYSwiftDatabaseCenter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TFYSwiftDatabaseCenter.swift; path = TFYSwiftSQLite/TFYSwiftSQLiteKit/Manager/TFYSwiftDatabaseCenter.swift; sourceTree = "<group>"; };
 		66F43968613C6BC8F6F9715D /* TFYSwiftSQLiteTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TFYSwiftSQLiteTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		758DE86B791C343BD4581CA8 /* TFYSwiftModelMirror.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TFYSwiftModelMirror.swift; path = TFYSwiftSQLite/TFYSwiftSQLiteKit/Reflection/TFYSwiftModelMirror.swift; sourceTree = "<group>"; };
+		827D9A345C11AC3974CC3E3E /* TFYSwiftDBError.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TFYSwiftDBError.swift; path = TFYSwiftSQLite/TFYSwiftSQLiteKit/Core/TFYSwiftDBError.swift; sourceTree = "<group>"; };
 		8496ACF72F92306C0052E441 /* TFYSwiftSQLite.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TFYSwiftSQLite.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		849D5B43E70BABA42C6D93F8 /* TFYSwiftTableBuilder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TFYSwiftTableBuilder.swift; path = TFYSwiftSQLite/TFYSwiftSQLiteKit/ORM/TFYSwiftTableBuilder.swift; sourceTree = "<group>"; };
+		8B38583E5CC28C5D2546CDEB /* BenchmarkModels.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BenchmarkModels.swift; path = TFYSwiftSQLiteBenchmarks/BenchmarkModels.swift; sourceTree = "<group>"; };
+		8EE75A3A4B66EBF7AB5D9909 /* TFYSwiftDBConnection.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TFYSwiftDBConnection.swift; path = TFYSwiftSQLite/TFYSwiftSQLiteKit/Core/TFYSwiftDBConnection.swift; sourceTree = "<group>"; };
+		93ABDC3DCB96F3F928A6FCC4 /* TFYSwiftSchemaMigrator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TFYSwiftSchemaMigrator.swift; path = TFYSwiftSQLite/TFYSwiftSQLiteKit/Schema/TFYSwiftSchemaMigrator.swift; sourceTree = "<group>"; };
+		949538A300E54BA9FB605A3A /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
+		9C79F0683A26612135BD6D43 /* TFYSwiftTypeMapper.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TFYSwiftTypeMapper.swift; path = TFYSwiftSQLite/TFYSwiftSQLiteKit/Utils/TFYSwiftTypeMapper.swift; sourceTree = "<group>"; };
+		A24D8F0CE8B6FD632B1B513E /* TFYSwiftDBModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TFYSwiftDBModel.swift; path = TFYSwiftSQLite/TFYSwiftSQLiteKit/ORM/TFYSwiftDBModel.swift; sourceTree = "<group>"; };
 		A5F83CC6537CDFA579AE241D /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		A79CB67C87A74202E73AC0B0 /* TFYSwiftDBLogging.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TFYSwiftDBLogging.swift; path = TFYSwiftSQLite/TFYSwiftSQLiteKit/Core/TFYSwiftDBLogging.swift; sourceTree = "<group>"; };
+		AACA078AEFA319DF28AA557E /* TFYSwiftColumn.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TFYSwiftColumn.swift; path = TFYSwiftSQLite/TFYSwiftSQLiteKit/ORM/TFYSwiftColumn.swift; sourceTree = "<group>"; };
+		AEB0A87F70E781EDE230BB10 /* TFYSwiftQuery.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TFYSwiftQuery.swift; path = TFYSwiftSQLite/TFYSwiftSQLiteKit/ORM/TFYSwiftQuery.swift; sourceTree = "<group>"; };
+		B3281CE364B6687069718322 /* TFYSwiftAutoTable.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TFYSwiftAutoTable.swift; path = TFYSwiftSQLite/TFYSwiftSQLiteKit/Schema/TFYSwiftAutoTable.swift; sourceTree = "<group>"; };
 		BD08FCE2192639697FD280F5 /* TFYSwiftSQLiteKitTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TFYSwiftSQLiteKitTests.swift; sourceTree = "<group>"; };
 		D32304F00FA3573709DCCC0B /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
+		F1E97402CEA729ACEB165474 /* TFYSwiftColumnAnnotations.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TFYSwiftColumnAnnotations.swift; path = TFYSwiftSQLite/TFYSwiftSQLiteKit/Annotation/TFYSwiftColumnAnnotations.swift; sourceTree = "<group>"; };
+		F80FD5211E62B47FC01B8C5D /* TFYSwiftIndexBuilder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TFYSwiftIndexBuilder.swift; path = TFYSwiftSQLite/TFYSwiftSQLiteKit/Schema/TFYSwiftIndexBuilder.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -52,10 +81,20 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		700C3B99E83ABC7EF5AFA27D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B042E6015F655271ADAC4611 /* Cocoa.framework in Frameworks */,
+				1A2B3C4D5E6F700100000003 /* TFYSwiftSQLiteKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8496ACF42F92306C0052E441 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1A2B3C4D5E6F700100000001 /* TFYSwiftSQLiteKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -63,6 +102,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1A2B3C4D5E6F700100000002 /* TFYSwiftSQLiteKit in Frameworks */,
 				0FB2177856900E2280294803 /* Foundation.framework in Frameworks */,
 				1742D3BC5F9E96CA3D26C552 /* XCTest.framework in Frameworks */,
 			);
@@ -71,9 +111,34 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		5EA2E5CF216CB3DC9C19916C /* TFYSwiftSQLiteKitShared */ = {
+			isa = PBXGroup;
+			children = (
+				F1E97402CEA729ACEB165474 /* TFYSwiftColumnAnnotations.swift */,
+				8EE75A3A4B66EBF7AB5D9909 /* TFYSwiftDBConnection.swift */,
+				827D9A345C11AC3974CC3E3E /* TFYSwiftDBError.swift */,
+				A79CB67C87A74202E73AC0B0 /* TFYSwiftDBLogging.swift */,
+				40407E33E38FB3DA399BD5D2 /* TFYSwiftDBStatement.swift */,
+				62CB4E8D6209639DE3190AA0 /* TFYSwiftDatabaseCenter.swift */,
+				AACA078AEFA319DF28AA557E /* TFYSwiftColumn.swift */,
+				A24D8F0CE8B6FD632B1B513E /* TFYSwiftDBModel.swift */,
+				551B62C162F718A122BF3AF9 /* TFYSwiftORM.swift */,
+				AEB0A87F70E781EDE230BB10 /* TFYSwiftQuery.swift */,
+				849D5B43E70BABA42C6D93F8 /* TFYSwiftTableBuilder.swift */,
+				758DE86B791C343BD4581CA8 /* TFYSwiftModelMirror.swift */,
+				B3281CE364B6687069718322 /* TFYSwiftAutoTable.swift */,
+				F80FD5211E62B47FC01B8C5D /* TFYSwiftIndexBuilder.swift */,
+				93ABDC3DCB96F3F928A6FCC4 /* TFYSwiftSchemaMigrator.swift */,
+				4C1E230220878FC8CB5C7C0C /* TFYSwiftBenchmark.swift */,
+				9C79F0683A26612135BD6D43 /* TFYSwiftTypeMapper.swift */,
+			);
+			name = TFYSwiftSQLiteKitShared;
+			sourceTree = "<group>";
+		};
 		5EFE538E8C20B8F0D1011A68 /* TFYSwiftSQLiteTests */ = {
 			isa = PBXGroup;
 			children = (
+				1A2B3C4D5E6F700100000005 /* TestModels.swift */,
 				BD08FCE2192639697FD280F5 /* TFYSwiftSQLiteKitTests.swift */,
 			);
 			path = TFYSwiftSQLiteTests;
@@ -86,6 +151,8 @@
 				8496ACF82F92306C0052E441 /* Products */,
 				AA2AD52D61234AB69BAB8881 /* Frameworks */,
 				5EFE538E8C20B8F0D1011A68 /* TFYSwiftSQLiteTests */,
+				9F7F37543FBFE581E32B8809 /* TFYSwiftSQLiteBenchmarks */,
+				5EA2E5CF216CB3DC9C19916C /* TFYSwiftSQLiteKitShared */,
 			);
 			sourceTree = "<group>";
 		};
@@ -94,6 +161,7 @@
 			children = (
 				8496ACF72F92306C0052E441 /* TFYSwiftSQLite.app */,
 				66F43968613C6BC8F6F9715D /* TFYSwiftSQLiteTests.xctest */,
+				021010F83CEBCDD388A79DEC /* TFYSwiftSQLiteBenchmarks */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -107,10 +175,28 @@
 			name = iOS;
 			sourceTree = "<group>";
 		};
+		90DAFC8CED79173A2F88B567 /* OS X */ = {
+			isa = PBXGroup;
+			children = (
+				949538A300E54BA9FB605A3A /* Cocoa.framework */,
+			);
+			name = "OS X";
+			sourceTree = "<group>";
+		};
+		9F7F37543FBFE581E32B8809 /* TFYSwiftSQLiteBenchmarks */ = {
+			isa = PBXGroup;
+			children = (
+				8B38583E5CC28C5D2546CDEB /* BenchmarkModels.swift */,
+				4B4658D2C07F1D00BC4A80FE /* main.swift */,
+			);
+			name = TFYSwiftSQLiteBenchmarks;
+			sourceTree = "<group>";
+		};
 		AA2AD52D61234AB69BAB8881 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				8A7F6379655A639F0D59BBD7 /* iOS */,
+				90DAFC8CED79173A2F88B567 /* OS X */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -134,6 +220,9 @@
 				8496ACF92F92306C0052E441 /* TFYSwiftSQLite */,
 			);
 			name = TFYSwiftSQLite;
+			packageProductDependencies = (
+				1A2B3C4D5E6F700100000007 /* TFYSwiftSQLiteKit */,
+			);
 			productName = TFYSwiftSQLite;
 			productReference = 8496ACF72F92306C0052E441 /* TFYSwiftSQLite.app */;
 			productType = "com.apple.product-type.application";
@@ -152,9 +241,31 @@
 				CEFE3EF64DDFD324B40B771C /* PBXTargetDependency */,
 			);
 			name = TFYSwiftSQLiteTests;
+			packageProductDependencies = (
+				1A2B3C4D5E6F700100000007 /* TFYSwiftSQLiteKit */,
+			);
 			productName = TFYSwiftSQLiteTests;
 			productReference = 66F43968613C6BC8F6F9715D /* TFYSwiftSQLiteTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		EF0B10816FA0D6010219D0C1 /* TFYSwiftSQLiteBenchmarks */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = ECA98D2C62E99445712FB3A9 /* Build configuration list for PBXNativeTarget "TFYSwiftSQLiteBenchmarks" */;
+			buildPhases = (
+				6DE90BD1480AA78530F3A0EE /* Sources */,
+				700C3B99E83ABC7EF5AFA27D /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TFYSwiftSQLiteBenchmarks;
+			packageProductDependencies = (
+				1A2B3C4D5E6F700100000007 /* TFYSwiftSQLiteKit */,
+			);
+			productName = TFYSwiftSQLiteBenchmarks;
+			productReference = 021010F83CEBCDD388A79DEC /* TFYSwiftSQLiteBenchmarks */;
+			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
 
@@ -184,6 +295,9 @@
 			);
 			mainGroup = 8496ACEE2F92306C0052E441;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				1A2B3C4D5E6F700100000006 /* XCLocalSwiftPackageReference "" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8496ACF82F92306C0052E441 /* Products */;
 			projectDirPath = "";
@@ -191,6 +305,7 @@
 			targets = (
 				8496ACF62F92306C0052E441 /* TFYSwiftSQLite */,
 				D575607CCEA0EC05AB175CAE /* TFYSwiftSQLiteTests */,
+				EF0B10816FA0D6010219D0C1 /* TFYSwiftSQLiteBenchmarks */,
 			);
 		};
 /* End PBXProject section */
@@ -217,7 +332,17 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1A2B3C4D5E6F700100000004 /* TestModels.swift in Sources */,
 				8E97C067234392D17A7B2069 /* TFYSwiftSQLiteKitTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6DE90BD1480AA78530F3A0EE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				81F68ADB07EF645DE4CCFB28 /* BenchmarkModels.swift in Sources */,
+				933A1D0219B7A0D739B586E0 /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -247,9 +372,10 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = QH95759TSS;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -258,7 +384,9 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Daily.vest.bag.company.TFYSwiftSQLite.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -268,6 +396,26 @@
 			};
 			name = Release;
 		};
+		60D6C7991447779A0A9B7DD0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				DEAD_CODE_STRIPPING = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Daily.vest.bag.company.TFYSwiftSQLiteBenchmarks;
+				PRODUCT_MODULE_NAME = TFYSwiftSQLiteBenchmarks;
+				PRODUCT_NAME = TFYSwiftSQLiteBenchmarks;
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
 		6148A3BEB92BBFEFC112B018 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -275,18 +423,22 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = QH95759TSS;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Daily.vest.bag.company.TFYSwiftSQLite.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -302,24 +454,27 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = QH95759TSS;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = TFYSwiftSQLite/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Daily.vest.bag.company.TFYSwiftSQLite;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
@@ -334,14 +489,14 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = QH95759TSS;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = TFYSwiftSQLite/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -350,8 +505,10 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.Daily.vest.bag.company.TFYSwiftSQLite;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
@@ -393,6 +550,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = QH95759TSS;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -412,13 +570,15 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = iphoneos;
+				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -458,6 +618,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = QH95759TSS;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -471,14 +632,35 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
-				SDKROOT = iphoneos;
+				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		B6E5FBF767E6747B8EFBED86 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				DEAD_CODE_STRIPPING = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Daily.vest.bag.company.TFYSwiftSQLiteBenchmarks;
+				PRODUCT_MODULE_NAME = TFYSwiftSQLiteBenchmarks;
+				PRODUCT_NAME = TFYSwiftSQLiteBenchmarks;
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
 		};
@@ -512,7 +694,31 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		ECA98D2C62E99445712FB3A9 /* Build configuration list for PBXNativeTarget "TFYSwiftSQLiteBenchmarks" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B6E5FBF767E6747B8EFBED86 /* Release */,
+				60D6C7991447779A0A9B7DD0 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		1A2B3C4D5E6F700100000006 /* XCLocalSwiftPackageReference "" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "";
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		1A2B3C4D5E6F700100000007 /* TFYSwiftSQLiteKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1A2B3C4D5E6F700100000006 /* XCLocalSwiftPackageReference "" */;
+			productName = TFYSwiftSQLiteKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 8496ACEF2F92306C0052E441 /* Project object */;
 }

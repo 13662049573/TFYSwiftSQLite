@@ -1,0 +1,124 @@
+{
+  "": {
+    "swift-dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/primary.swiftdeps"
+  },
+  "/Users/admin/Desktop/my/TFYSwiftSQLite/TFYSwiftSQLite/TFYSwiftSQLiteKit/Annotation/TFYSwiftColumnAnnotations.swift": {
+    "dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftColumnAnnotations.d",
+    "object": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftColumnAnnotations.swift.o",
+    "swiftmodule": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftColumnAnnotations~partial.swiftmodule",
+    "swift-dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftColumnAnnotations.swiftdeps",
+    "diagnostics": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftColumnAnnotations.dia"
+  },
+  "/Users/admin/Desktop/my/TFYSwiftSQLite/TFYSwiftSQLite/TFYSwiftSQLiteKit/Core/TFYSwiftDBConnection.swift": {
+    "dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDBConnection.d",
+    "object": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDBConnection.swift.o",
+    "swiftmodule": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDBConnection~partial.swiftmodule",
+    "swift-dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDBConnection.swiftdeps",
+    "diagnostics": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDBConnection.dia"
+  },
+  "/Users/admin/Desktop/my/TFYSwiftSQLite/TFYSwiftSQLite/TFYSwiftSQLiteKit/Core/TFYSwiftDBError.swift": {
+    "dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDBError.d",
+    "object": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDBError.swift.o",
+    "swiftmodule": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDBError~partial.swiftmodule",
+    "swift-dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDBError.swiftdeps",
+    "diagnostics": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDBError.dia"
+  },
+  "/Users/admin/Desktop/my/TFYSwiftSQLite/TFYSwiftSQLite/TFYSwiftSQLiteKit/Core/TFYSwiftDBLogging.swift": {
+    "dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDBLogging.d",
+    "object": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDBLogging.swift.o",
+    "swiftmodule": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDBLogging~partial.swiftmodule",
+    "swift-dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDBLogging.swiftdeps",
+    "diagnostics": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDBLogging.dia"
+  },
+  "/Users/admin/Desktop/my/TFYSwiftSQLite/TFYSwiftSQLite/TFYSwiftSQLiteKit/Core/TFYSwiftDBStatement.swift": {
+    "dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDBStatement.d",
+    "object": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDBStatement.swift.o",
+    "swiftmodule": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDBStatement~partial.swiftmodule",
+    "swift-dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDBStatement.swiftdeps",
+    "diagnostics": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDBStatement.dia"
+  },
+  "/Users/admin/Desktop/my/TFYSwiftSQLite/TFYSwiftSQLite/TFYSwiftSQLiteKit/Manager/TFYSwiftDatabaseCenter.swift": {
+    "dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDatabaseCenter.d",
+    "object": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDatabaseCenter.swift.o",
+    "swiftmodule": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDatabaseCenter~partial.swiftmodule",
+    "swift-dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDatabaseCenter.swiftdeps",
+    "diagnostics": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDatabaseCenter.dia"
+  },
+  "/Users/admin/Desktop/my/TFYSwiftSQLite/TFYSwiftSQLite/TFYSwiftSQLiteKit/ORM/TFYSwiftColumn.swift": {
+    "dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftColumn.d",
+    "object": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftColumn.swift.o",
+    "swiftmodule": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftColumn~partial.swiftmodule",
+    "swift-dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftColumn.swiftdeps",
+    "diagnostics": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftColumn.dia"
+  },
+  "/Users/admin/Desktop/my/TFYSwiftSQLite/TFYSwiftSQLite/TFYSwiftSQLiteKit/ORM/TFYSwiftDBModel.swift": {
+    "dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDBModel.d",
+    "object": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDBModel.swift.o",
+    "swiftmodule": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDBModel~partial.swiftmodule",
+    "swift-dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDBModel.swiftdeps",
+    "diagnostics": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftDBModel.dia"
+  },
+  "/Users/admin/Desktop/my/TFYSwiftSQLite/TFYSwiftSQLite/TFYSwiftSQLiteKit/ORM/TFYSwiftORM.swift": {
+    "dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftORM.d",
+    "object": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftORM.swift.o",
+    "swiftmodule": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftORM~partial.swiftmodule",
+    "swift-dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftORM.swiftdeps",
+    "diagnostics": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftORM.dia"
+  },
+  "/Users/admin/Desktop/my/TFYSwiftSQLite/TFYSwiftSQLite/TFYSwiftSQLiteKit/ORM/TFYSwiftQuery.swift": {
+    "dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftQuery.d",
+    "object": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftQuery.swift.o",
+    "swiftmodule": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftQuery~partial.swiftmodule",
+    "swift-dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftQuery.swiftdeps",
+    "diagnostics": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftQuery.dia"
+  },
+  "/Users/admin/Desktop/my/TFYSwiftSQLite/TFYSwiftSQLite/TFYSwiftSQLiteKit/ORM/TFYSwiftTableBuilder.swift": {
+    "dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftTableBuilder.d",
+    "object": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftTableBuilder.swift.o",
+    "swiftmodule": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftTableBuilder~partial.swiftmodule",
+    "swift-dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftTableBuilder.swiftdeps",
+    "diagnostics": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftTableBuilder.dia"
+  },
+  "/Users/admin/Desktop/my/TFYSwiftSQLite/TFYSwiftSQLite/TFYSwiftSQLiteKit/Reflection/TFYSwiftModelMirror.swift": {
+    "dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftModelMirror.d",
+    "object": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftModelMirror.swift.o",
+    "swiftmodule": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftModelMirror~partial.swiftmodule",
+    "swift-dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftModelMirror.swiftdeps",
+    "diagnostics": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftModelMirror.dia"
+  },
+  "/Users/admin/Desktop/my/TFYSwiftSQLite/TFYSwiftSQLite/TFYSwiftSQLiteKit/Schema/TFYSwiftAutoTable.swift": {
+    "dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftAutoTable.d",
+    "object": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftAutoTable.swift.o",
+    "swiftmodule": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftAutoTable~partial.swiftmodule",
+    "swift-dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftAutoTable.swiftdeps",
+    "diagnostics": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftAutoTable.dia"
+  },
+  "/Users/admin/Desktop/my/TFYSwiftSQLite/TFYSwiftSQLite/TFYSwiftSQLiteKit/Schema/TFYSwiftIndexBuilder.swift": {
+    "dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftIndexBuilder.d",
+    "object": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftIndexBuilder.swift.o",
+    "swiftmodule": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftIndexBuilder~partial.swiftmodule",
+    "swift-dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftIndexBuilder.swiftdeps",
+    "diagnostics": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftIndexBuilder.dia"
+  },
+  "/Users/admin/Desktop/my/TFYSwiftSQLite/TFYSwiftSQLite/TFYSwiftSQLiteKit/Schema/TFYSwiftSchemaMigrator.swift": {
+    "dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftSchemaMigrator.d",
+    "object": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftSchemaMigrator.swift.o",
+    "swiftmodule": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftSchemaMigrator~partial.swiftmodule",
+    "swift-dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftSchemaMigrator.swiftdeps",
+    "diagnostics": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftSchemaMigrator.dia"
+  },
+  "/Users/admin/Desktop/my/TFYSwiftSQLite/TFYSwiftSQLite/TFYSwiftSQLiteKit/Utils/TFYSwiftBenchmark.swift": {
+    "dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftBenchmark.d",
+    "object": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftBenchmark.swift.o",
+    "swiftmodule": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftBenchmark~partial.swiftmodule",
+    "swift-dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftBenchmark.swiftdeps",
+    "diagnostics": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftBenchmark.dia"
+  },
+  "/Users/admin/Desktop/my/TFYSwiftSQLite/TFYSwiftSQLite/TFYSwiftSQLiteKit/Utils/TFYSwiftTypeMapper.swift": {
+    "dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftTypeMapper.d",
+    "object": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftTypeMapper.swift.o",
+    "swiftmodule": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftTypeMapper~partial.swiftmodule",
+    "swift-dependencies": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftTypeMapper.swiftdeps",
+    "diagnostics": "/Users/admin/Desktop/my/TFYSwiftSQLite/.build/arm64-apple-macosx/debug/TFYSwiftSQLiteKit.build/TFYSwiftTypeMapper.dia"
+  }
+}

@@ -15,10 +15,14 @@ public struct TFYSQLiteIndexInfo: Equatable {
 }
 
 public final class TFYSwiftDBConnection {
+    public let databaseName: String
     public let path: String
     private let handle: OpaquePointer?
+    private let transactionLock = NSRecursiveLock()
+    private var transactionDepth = 0
 
-    public init(path: String) throws {
+    public init(path: String, databaseName: String) throws {
+        self.databaseName = databaseName
         self.path = path
         var database: OpaquePointer?
         let flags = SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX
@@ -43,30 +47,57 @@ public final class TFYSwiftDBConnection {
     }
 
     public func execute(_ sql: String, bindings: [TFYSQLiteBindValue?] = []) throws {
-        let statement = try TFYSwiftDBStatement(connection: handle, sql: sql)
-        try statement.bind(bindings)
-        while try statement.step() {}
+        try measure(sql, bindings: bindings) {
+            let statement = try TFYSwiftDBStatement(connection: handle, sql: sql)
+            try statement.bind(bindings)
+            while try statement.step() {}
+        }
     }
 
     public func query(_ sql: String, bindings: [TFYSQLiteBindValue?] = []) throws -> [[String: TFYSQLiteValue]] {
-        let statement = try TFYSwiftDBStatement(connection: handle, sql: sql)
-        try statement.bind(bindings)
+        try measure(sql, bindings: bindings) {
+            let statement = try TFYSwiftDBStatement(connection: handle, sql: sql)
+            try statement.bind(bindings)
 
-        var rows: [[String: TFYSQLiteValue]] = []
-        while try statement.step() {
-            rows.append(statement.row())
+            var rows: [[String: TFYSQLiteValue]] = []
+            while try statement.step() {
+                rows.append(statement.row())
+            }
+            return rows
         }
-        return rows
     }
 
     public func withTransaction<T>(_ block: () throws -> T) throws -> T {
-        try execute("BEGIN IMMEDIATE TRANSACTION;")
+        transactionLock.lock()
+        let currentDepth = transactionDepth
+        transactionDepth += 1
+        let savepointName = "tfy_savepoint_\(transactionDepth)"
+
         do {
+            if currentDepth == 0 {
+                try execute("BEGIN IMMEDIATE TRANSACTION;")
+            } else {
+                try execute("SAVEPOINT \(TFYSwiftSQL.escapeIdentifier(savepointName));")
+            }
+
             let result = try block()
-            try execute("COMMIT;")
+            if currentDepth == 0 {
+                try execute("COMMIT;")
+            } else {
+                try execute("RELEASE SAVEPOINT \(TFYSwiftSQL.escapeIdentifier(savepointName));")
+            }
+            transactionDepth -= 1
+            transactionLock.unlock()
             return result
         } catch {
-            try? execute("ROLLBACK;")
+            if currentDepth == 0 {
+                try? execute("ROLLBACK;")
+            } else {
+                try? execute("ROLLBACK TO SAVEPOINT \(TFYSwiftSQL.escapeIdentifier(savepointName));")
+                try? execute("RELEASE SAVEPOINT \(TFYSwiftSQL.escapeIdentifier(savepointName));")
+            }
+            transactionDepth -= 1
+            transactionLock.unlock()
             throw error
         }
     }
@@ -122,5 +153,45 @@ public final class TFYSwiftDBConnection {
         }
 
         return indexes
+    }
+
+    public func scalar(_ sql: String, bindings: [TFYSQLiteBindValue?] = []) throws -> TFYSQLiteValue? {
+        let rows = try query(sql, bindings: bindings)
+        return rows.first?.values.first
+    }
+
+    private func measure<T>(_ sql: String, bindings: [TFYSQLiteBindValue?], work: () throws -> T) throws -> T {
+        let start = CFAbsoluteTimeGetCurrent()
+        do {
+            let result = try work()
+            log(
+                sql: sql,
+                bindings: bindings,
+                duration: CFAbsoluteTimeGetCurrent() - start,
+                error: nil
+            )
+            return result
+        } catch {
+            log(
+                sql: sql,
+                bindings: bindings,
+                duration: CFAbsoluteTimeGetCurrent() - start,
+                error: error
+            )
+            throw error
+        }
+    }
+
+    private func log(sql: String, bindings: [TFYSQLiteBindValue?], duration: TimeInterval, error: Error?) {
+        let event = TFYSwiftSQLLogEvent(
+            databaseName: databaseName,
+            databasePath: path,
+            sql: sql,
+            bindings: bindings.map { ($0 ?? .null).description },
+            duration: duration,
+            succeeded: error == nil,
+            errorDescription: error.map { String(describing: $0) }
+        )
+        TFYSwiftDBRuntime.emit(event)
     }
 }

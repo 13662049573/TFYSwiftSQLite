@@ -43,8 +43,27 @@ public struct TFYSwiftIndexDefinition: Equatable {
     public let columns: [String]
     public let unique: Bool
 
-    public var signature: String {
+    public nonisolated var signature: String {
         "\(unique ? "unique" : "index")|\(columns.joined(separator: ","))"
+    }
+}
+
+public struct TFYSwiftRebuildPlan {
+    public let oldTableName: String
+    public let temporaryTableName: String
+    public let destinationColumns: [String]
+    public let selectExpressions: [String]
+
+    public init(
+        oldTableName: String,
+        temporaryTableName: String,
+        destinationColumns: [String],
+        selectExpressions: [String]
+    ) {
+        self.oldTableName = oldTableName
+        self.temporaryTableName = temporaryTableName
+        self.destinationColumns = destinationColumns
+        self.selectExpressions = selectExpressions
     }
 }
 
@@ -56,20 +75,47 @@ public struct TFYSwiftModelSchema {
     public let columns: [TFYSwiftColumn]
     public let compositeIndexes: [TFYCompositeIndex]
 
-    public var persistedColumns: [TFYSwiftColumn] {
+    public nonisolated var persistedColumns: [TFYSwiftColumn] {
         columns.filter { !$0.isIgnored }
     }
 
-    public var primaryKeyColumn: TFYSwiftColumn? {
+    public nonisolated var primaryKeyColumn: TFYSwiftColumn? {
         persistedColumns.first(where: \.isPrimaryKey)
     }
 
-    public func column(forProperty propertyName: String) -> TFYSwiftColumn? {
+    public nonisolated func column(forProperty propertyName: String) -> TFYSwiftColumn? {
         persistedColumns.first(where: { $0.propertyName == propertyName })
     }
 
-    public func column(named columnName: String) -> TFYSwiftColumn? {
+    public nonisolated func column(named columnName: String) -> TFYSwiftColumn? {
         persistedColumns.first(where: { $0.name == columnName })
+    }
+
+    public nonisolated var signature: String {
+        let columnSignature = persistedColumns.map { column in
+            [
+                column.name,
+                column.sqliteType,
+                column.isPrimaryKey ? "pk" : "",
+                column.isAutoIncrement ? "ai" : "",
+                column.isIndexed ? "idx" : "",
+                column.isUnique ? "uniq" : "",
+                column.defaultSQL ?? "",
+                column.isOptional ? "optional" : "required",
+                column.storageStrategy.rawValue
+            ].joined(separator: "|")
+        }.joined(separator: ";")
+
+        let indexSignature = compositeIndexes.map { index in
+            [
+                index.name ?? "",
+                index.unique ? "unique" : "index",
+                index.columns.joined(separator: ",")
+            ].joined(separator: "|")
+        }.joined(separator: ";")
+
+        return [modelName, tableName, databaseName, migrationPolicy.rawValue, columnSignature, indexSignature]
+            .joined(separator: "#")
     }
 }
 
@@ -81,6 +127,7 @@ public struct TFYSwiftMigrationReport {
     public private(set) var createdTableSQL: [String] = []
     public private(set) var addedColumnSQL: [String] = []
     public private(set) var createdIndexSQL: [String] = []
+    public private(set) var rebuildSQL: [String] = []
     public private(set) var warnings: [String] = []
 
     public init(modelName: String, tableName: String, databaseName: String, databasePath: String) {
@@ -90,8 +137,8 @@ public struct TFYSwiftMigrationReport {
         self.databasePath = databasePath
     }
 
-    public var hasChanges: Bool {
-        !createdTableSQL.isEmpty || !addedColumnSQL.isEmpty || !createdIndexSQL.isEmpty
+    public nonisolated var hasChanges: Bool {
+        !createdTableSQL.isEmpty || !addedColumnSQL.isEmpty || !createdIndexSQL.isEmpty || !rebuildSQL.isEmpty
     }
 
     public mutating func addCreatedTableSQL(_ sql: String) {
@@ -106,11 +153,15 @@ public struct TFYSwiftMigrationReport {
         createdIndexSQL.append(sql)
     }
 
+    public mutating func addRebuildSQL(_ sql: String) {
+        rebuildSQL.append(sql)
+    }
+
     public mutating func addWarning(_ warning: String) {
         warnings.append(warning)
     }
 
-    public func formattedLines() -> [String] {
+    public nonisolated func formattedLines() -> [String] {
         var lines: [String] = []
         lines.append("Model: \(modelName)")
         lines.append("Table: \(tableName)")
@@ -133,6 +184,12 @@ public struct TFYSwiftMigrationReport {
         } else {
             lines.append("CREATE INDEX:")
             lines.append(contentsOf: createdIndexSQL.map { "  \($0)" })
+        }
+        if rebuildSQL.isEmpty {
+            lines.append("REBUILD TABLE: none")
+        } else {
+            lines.append("REBUILD TABLE:")
+            lines.append(contentsOf: rebuildSQL.map { "  \($0)" })
         }
         if warnings.isEmpty {
             lines.append("Warnings: none")

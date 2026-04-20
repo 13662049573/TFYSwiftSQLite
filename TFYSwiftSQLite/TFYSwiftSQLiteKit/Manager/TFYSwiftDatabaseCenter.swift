@@ -17,7 +17,7 @@ public final class TFYSwiftDatabaseCenter {
         }
 
         let path = try Self.databasePath(named: databaseName)
-        let connection = try TFYSwiftDBConnection(path: path)
+        let connection = try TFYSwiftDBConnection(path: path, databaseName: databaseName)
         connections[databaseName] = connection
         return connection
     }
@@ -43,6 +43,12 @@ public final class TFYSwiftDatabaseCenter {
         lock.lock()
         defer { lock.unlock() }
         connections.removeAll()
+    }
+
+    public func close(named databaseName: String) {
+        lock.lock()
+        defer { lock.unlock() }
+        connections.removeValue(forKey: databaseName)
     }
 
     public static func databasePath(named databaseName: String) throws -> String {

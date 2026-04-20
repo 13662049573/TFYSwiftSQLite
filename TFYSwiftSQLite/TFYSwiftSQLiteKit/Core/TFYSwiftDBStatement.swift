@@ -9,12 +9,46 @@ public enum TFYSQLiteBindValue: Equatable {
     case null
 }
 
+extension TFYSQLiteBindValue: CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case let .integer(value):
+            return "integer(\(value))"
+        case let .double(value):
+            return "double(\(value))"
+        case let .text(value):
+            return "text(\(value))"
+        case let .blob(data):
+            return "blob(\(data.count) bytes)"
+        case .null:
+            return "null"
+        }
+    }
+}
+
 public enum TFYSQLiteValue: Equatable {
     case integer(Int64)
     case double(Double)
     case text(String)
     case blob(Data)
     case null
+}
+
+extension TFYSQLiteValue: CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case let .integer(value):
+            return "integer(\(value))"
+        case let .double(value):
+            return "double(\(value))"
+        case let .text(value):
+            return "text(\(value))"
+        case let .blob(data):
+            return "blob(\(data.count) bytes)"
+        case .null:
+            return "null"
+        }
+    }
 }
 
 public final class TFYSwiftDBStatement {

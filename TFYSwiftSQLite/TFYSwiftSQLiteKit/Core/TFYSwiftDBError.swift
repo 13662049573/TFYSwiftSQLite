@@ -10,6 +10,7 @@ public enum TFYSwiftDBError: Error, CustomStringConvertible {
     case missingPrimaryKey(String)
     case encoding(String)
     case decoding(String)
+    case invalidQuery(String)
     case migrationConflict(String)
     case notFound(String)
 
@@ -28,6 +29,7 @@ public enum TFYSwiftDBError: Error, CustomStringConvertible {
              let .missingPrimaryKey(message),
              let .encoding(message),
              let .decoding(message),
+             let .invalidQuery(message),
              let .migrationConflict(message),
              let .notFound(message):
             return message
