@@ -39,7 +39,17 @@
 pod 'TFYSwiftSQLiteKit', '~> 1.0.1'
 ```
 
-`TFYSwiftSQLiteKit` 的 pod 会一次性包含 `Annotation`、`Core`、`Manager`、`ORM`、`Reflection`、`Schema`、`Utils` 全部目录源码，并自动链接 `sqlite3`。当前不需要额外选择 subspec。
+`TFYSwiftSQLiteKit` 的 pod 会按库当前目录结构收录以下源码目录，并自动链接 `sqlite3`：
+
+- `Annotation`
+- `Core`
+- `Manager`
+- `ORM`
+- `Reflection`
+- `Schema`
+- `Utils`
+
+当前 CocoaPods 形态仍然是一个完整 runtime pod；由于库内部存在跨目录引用，`podspec` 里保留了按文件夹维护的源码清单，并在注释中标明内部依赖关系，方便后续继续拆边界。
 
 版本号与 `TFYSwiftSQLiteKit.podspec` 中 `s.version` 保持一致；发版时请打对应 git tag。
 

@@ -32,5 +32,25 @@ Pod::Spec.new do |s|
   s.libraries        = 'sqlite3'
 
   kit = 'TFYSwiftSQLite/TFYSwiftSQLiteKit'
-  s.source_files     = "#{kit}/**/*.swift"
+
+  # Folder layout kept 1:1 with the library source tree.
+  # Internal dependency graph (code-level, documented here for maintenance):
+  # - Annotation -> Utils
+  # - Manager -> Core
+  # - Reflection -> Annotation/Core/ORM/Utils
+  # - Schema -> Core/Manager/ORM/Reflection
+  # - Utils -> Core/ORM
+  # - ORM -> Core/Manager/Reflection/Schema/Utils
+  #
+  # The runtime currently contains circular references across ORM/Utils/Reflection/Schema,
+  # so CocoaPods integration ships the full kit as one pod while preserving folder-based globs.
+  s.source_files = [
+    "#{kit}/Annotation/**/*.swift",
+    "#{kit}/Core/**/*.swift",
+    "#{kit}/Manager/**/*.swift",
+    "#{kit}/ORM/**/*.swift",
+    "#{kit}/Reflection/**/*.swift",
+    "#{kit}/Schema/**/*.swift",
+    "#{kit}/Utils/**/*.swift"
+  ]
 end
