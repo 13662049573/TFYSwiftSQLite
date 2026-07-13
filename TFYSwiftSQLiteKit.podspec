@@ -17,7 +17,7 @@ Pod::Spec.new do |s|
 
   s.source           = { :git => 'https://github.com/13662049573/TFYSwiftSQLite.git', :tag => s.version.to_s }
 
-  s.swift_version    = '5.0'
+  s.swift_version    = '5.9'
 
   s.requires_arc     = true
 

@@ -11,8 +11,10 @@
 | **Annotation** | `@TFYColumn`、`@TFYPrimaryKey`、`@TFYIndex`、`@TFYUnique`、`@TFYDefault`、`@TFYIgnore` 等 |
 | **ORM** | `TFYSwiftDBModel`、`TFYSwiftORM`（insert / update / delete / fetch） |
 | **Schema** | `TFYSwiftAutoTable`、`TFYSwiftSchemaMigrator`、复合索引 `TFYCompositeIndex`、`TFYMigrationPolicy` |
-| **Core** | `TFYSwiftDBConnection`（WAL、foreign_keys）、`TFYSwiftDBStatement`、`TFYSwiftDBError` |
+| **Core** | `TFYSwiftDBConnection`（连接级线程安全、嵌套事务、WAL、busy timeout）、`TFYSwiftDBStatement`、`TFYSwiftDBError` |
 | **Manager** | `TFYSwiftDatabaseCenter` 单例：按库名缓存连接、路径解析、删除库文件 |
+
+面向生产环境的默认策略包括：同一连接上的 SQL 与事务串行化、5 秒锁等待、WAL 自动 checkpoint、外键开启、迁移整体事务化、SQL 日志绑定值默认脱敏，以及批量写入复用 prepared statement。
 
 ## 集成
 
@@ -99,6 +101,65 @@ try u.delete()
 
 条件查询使用 SQL 片段与绑定参数（见 `TFYSwiftORM.fetchAll(_:where:bindings:)`）。
 
+### 4. 类型安全查询
+
+业务代码优先使用类型安全查询，避免手写字段名：
+
+```swift
+let adults = try User.fetchAll(
+    User.query()
+        .where(User.fields.age >= 18)
+        .orderBy(User.fields.age.descending())
+        .limit(20)
+)
+```
+
+`delete(_ query:)` 必须包含真实谓词；只有排序或分页条件时会拒绝执行，防止误删整表。
+
+### 5. 数据库运行参数
+
+默认配置适合大多数移动端业务，也可以在首次打开数据库时覆盖：
+
+```swift
+let configuration = TFYSwiftDBConfiguration(
+    foreignKeysEnabled: true,
+    journalMode: .wal,
+    synchronousMode: .normal,
+    busyTimeout: 8,
+    walAutoCheckpoint: 1_000
+)
+
+let connection = try TFYSwiftDatabaseCenter.shared.open(
+    named: "business",
+    configuration: configuration
+)
+```
+
+同名数据库已打开后不能切换配置；请先调用 `close(named:)`，再使用新配置打开。
+
+### 6. SQL 观测与隐私
+
+绑定值默认脱敏，适合接入生产日志或性能监控：
+
+```swift
+TFYSwiftDBRuntime.setSQLLogger { event in
+    print(event.sql, event.duration, event.succeeded)
+}
+```
+
+只有在受控开发环境中才应显式使用 `bindingPolicy: .full`。日志回调应保持轻量，避免执行阻塞操作。
+
+### 7. 事务
+
+```swift
+try User.transaction {
+    try firstUser.insert()
+    try secondUser.insert()
+}
+```
+
+事务支持嵌套，内部通过 savepoint 实现。同一连接上的其他线程会等待当前事务完成，避免写入被意外纳入其他线程的事务。
+
 ## 仓库结构（库源码）
 
 ```
@@ -118,10 +179,21 @@ TFYSwiftSQLite/TFYSwiftSQLiteKit/
 - CocoaPods：由 `TFYSwiftSQLiteKit.podspec` 直接收录 `TFYSwiftSQLite/TFYSwiftSQLiteKit` 下全部 Swift 文件
 - 示例 app / tests / benchmark 仍位于 `TFYSwiftSQLite.xcodeproj`
 
+## 质量验证
+
+Swift Package 已包含测试目标，本地与 CI 使用同一入口：
+
+```bash
+swift test
+swift build -c release
+```
+
+当前测试覆盖 CRUD、批量写入、分页与计数、唯一索引、多数据库隔离、迁移与重建、日志脱敏、绑定参数校验，以及并发事务隔离。
+
 ## 系统要求
 
-- Swift 5.0+
-- **Swift Package Manager**：iOS 13+、macOS 10.15+、tvOS 13+、watchOS 6+
+- Swift 5.9+
+- **Swift Package Manager**：iOS 13+、macOS 13+、tvOS 13+、watchOS 6+
 - **CocoaPods**：iOS 15+、macOS 13.5+、tvOS 15+、watchOS 8+
 - 示例 Xcode 工程内应用目标的 **IPHONEOS_DEPLOYMENT_TARGET** 可能与上述不同，以工程设置为准
 

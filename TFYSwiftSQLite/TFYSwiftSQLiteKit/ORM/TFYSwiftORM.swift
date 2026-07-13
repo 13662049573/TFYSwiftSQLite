@@ -15,9 +15,7 @@ public enum TFYSwiftORM {
         let schema = try TFYSwiftModelMirror.schema(for: Model.self)
         let connection = try TFYSwiftDatabaseCenter.shared.open(named: schema.databaseName)
         try connection.withTransaction {
-            for model in models {
-                try persist(model, orReplace: false, connection: connection)
-            }
+            try persist(models, orReplace: false, connection: connection)
         }
     }
 
@@ -30,9 +28,7 @@ public enum TFYSwiftORM {
         let schema = try TFYSwiftModelMirror.schema(for: Model.self)
         let connection = try TFYSwiftDatabaseCenter.shared.open(named: schema.databaseName)
         try connection.withTransaction {
-            for model in models {
-                try persist(model, orReplace: true, connection: connection)
-            }
+            try persist(models, orReplace: true, connection: connection)
         }
     }
 
@@ -165,7 +161,7 @@ public enum TFYSwiftORM {
     }
 
     public static func count<Model: TFYSwiftDBModel>(_ modelType: Model.Type, _ query: TFYQuery<Model>) throws -> Int {
-        let rendered = try query.render()
+        let rendered = try query.renderPredicate()
         let schema = try TFYSwiftModelMirror.schema(for: modelType)
         let connection = try TFYSwiftDatabaseCenter.shared.open(named: schema.databaseName)
         let suffix = rendered.clause.map { " \($0)" } ?? ""
@@ -181,11 +177,20 @@ public enum TFYSwiftORM {
         where clause: String? = nil,
         bindings: [TFYSQLiteBindValue?] = []
     ) throws -> Bool {
-        try count(modelType, where: clause, bindings: bindings) > 0
+        let schema = try TFYSwiftModelMirror.schema(for: modelType)
+        let connection = try TFYSwiftDatabaseCenter.shared.open(named: schema.databaseName)
+        let suffix = clause.map { " WHERE \($0)" } ?? ""
+        let sql = "SELECT 1 AS row_exists FROM \(TFYSwiftSQL.escapeIdentifier(schema.tableName))\(suffix) LIMIT 1;"
+        return try connection.scalar(sql, bindings: bindings) != nil
     }
 
     public static func exists<Model: TFYSwiftDBModel>(_ modelType: Model.Type, _ query: TFYQuery<Model>) throws -> Bool {
-        try count(modelType, query) > 0
+        let rendered = try query.renderPredicate()
+        let schema = try TFYSwiftModelMirror.schema(for: modelType)
+        let connection = try TFYSwiftDatabaseCenter.shared.open(named: schema.databaseName)
+        let suffix = rendered.clause.map { " \($0)" } ?? ""
+        let sql = "SELECT 1 AS row_exists FROM \(TFYSwiftSQL.escapeIdentifier(schema.tableName))\(suffix) LIMIT 1;"
+        return try connection.scalar(sql, bindings: rendered.bindings) != nil
     }
 
     public static func transaction<Model: TFYSwiftDBModel>(_ modelType: Model.Type, _ block: () throws -> Void) throws {
@@ -200,6 +205,37 @@ public enum TFYSwiftORM {
         connection providedConnection: TFYSwiftDBConnection? = nil
     ) throws {
         let schema = try TFYSwiftModelMirror.schema(for: Model.self)
+        let payload = try persistPayload(for: model, schema: schema, orReplace: orReplace)
+        let connection = try providedConnection ?? TFYSwiftDatabaseCenter.shared.open(named: schema.databaseName)
+        try connection.execute(payload.sql, bindings: payload.bindings)
+    }
+
+    private static func persist<Model: TFYSwiftDBModel>(
+        _ models: [Model],
+        orReplace: Bool,
+        connection: TFYSwiftDBConnection
+    ) throws {
+        let schema = try TFYSwiftModelMirror.schema(for: Model.self)
+        var statementCache: [String: TFYSwiftDBStatement] = [:]
+
+        for model in models {
+            let payload = try persistPayload(for: model, schema: schema, orReplace: orReplace)
+            let statement: TFYSwiftDBStatement
+            if let cached = statementCache[payload.sql] {
+                statement = cached
+            } else {
+                statement = try connection.prepare(payload.sql)
+                statementCache[payload.sql] = statement
+            }
+            try connection.execute(statement, bindings: payload.bindings)
+        }
+    }
+
+    private static func persistPayload<Model: TFYSwiftDBModel>(
+        for model: Model,
+        schema: TFYSwiftModelSchema,
+        orReplace: Bool
+    ) throws -> (sql: String, bindings: [TFYSQLiteBindValue]) {
         let valueMap = try TFYSwiftModelMirror.propertyValueMap(from: model)
 
         var insertColumns: [TFYSwiftColumn] = []
@@ -226,8 +262,7 @@ public enum TFYSwiftORM {
         VALUES (\(placeholders));
         """
 
-        let connection = try providedConnection ?? TFYSwiftDatabaseCenter.shared.open(named: schema.databaseName)
-        try connection.execute(sql, bindings: bindings)
+        return (sql, bindings)
     }
 
     private static func delete<Model: TFYSwiftDBModel>(_ modelType: Model.Type, byPrimaryKeyBindValue value: TFYSQLiteBindValue) throws {
@@ -245,7 +280,7 @@ public enum TFYSwiftORM {
 
     public static func delete<Model: TFYSwiftDBModel>(_ modelType: Model.Type, _ query: TFYQuery<Model>) throws {
         let schema = try TFYSwiftModelMirror.schema(for: modelType)
-        let rendered = try query.render()
+        let rendered = try query.renderPredicate()
         guard rendered.clause != nil else {
             throw TFYSwiftDBError.invalidQuery("Refusing to delete all rows with an empty query. Provide a predicate.")
         }

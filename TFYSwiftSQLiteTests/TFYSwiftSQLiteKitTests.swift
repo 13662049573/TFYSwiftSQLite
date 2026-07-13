@@ -10,6 +10,8 @@ final class TFYSwiftSQLiteKitTests: XCTestCase {
         try TFYSwiftDatabaseCenter.shared.removeDatabase(named: "test_json")
         try TFYSwiftDatabaseCenter.shared.removeDatabase(named: "audit")
         try TFYSwiftDatabaseCenter.shared.removeDatabase(named: "rebuild")
+        try TFYSwiftDatabaseCenter.shared.removeDatabase(named: "binding_validation")
+        try TFYSwiftDatabaseCenter.shared.removeDatabase(named: "logger_privacy")
         TFYSwiftDBRuntime.setSQLLogger(nil)
     }
 
@@ -248,6 +250,130 @@ final class TFYSwiftSQLiteKitTests: XCTestCase {
             XCTAssertTrue(message.contains("missingColumn"))
         }
     }
+
+    func testBindingCountMismatchReturnsActionableError() throws {
+        let connection = try TFYSwiftDatabaseCenter.shared.open(named: "binding_validation")
+
+        XCTAssertThrowsError(try connection.execute("SELECT ?;")) { error in
+            guard case let TFYSwiftDBError.bindingCount(sql, expected, actual) = error else {
+                return XCTFail("Expected bindingCount error, got \(error)")
+            }
+            XCTAssertEqual(sql, "SELECT ?;")
+            XCTAssertEqual(expected, 1)
+            XCTAssertEqual(actual, 0)
+        }
+
+        try TFYSwiftDatabaseCenter.shared.removeDatabase(named: "binding_validation")
+    }
+
+    func testEmptyBlobAndEmbeddedNullTextRoundTrip() throws {
+        let connection = try TFYSwiftDatabaseCenter.shared.open(named: "binding_validation")
+        let embeddedNull = "prefix\0suffix"
+        let rows = try connection.query(
+            "SELECT typeof(?) AS blob_type, length(?) AS blob_length, ? AS text_value;",
+            bindings: [.blob(Data()), .blob(Data()), .text(embeddedNull)]
+        )
+
+        XCTAssertEqual(rows.first?["blob_type"], .text("blob"))
+        XCTAssertEqual(rows.first?["blob_length"], .integer(0))
+        XCTAssertEqual(rows.first?["text_value"], .text(embeddedNull))
+        try TFYSwiftDatabaseCenter.shared.removeDatabase(named: "binding_validation")
+    }
+
+    func testSQLLoggerRedactsBindingsByDefault() throws {
+        var selectEvent: TFYSwiftSQLLogEvent?
+        TFYSwiftDBRuntime.setSQLLogger { event in
+            if event.sql == "SELECT ?;" {
+                selectEvent = event
+            }
+        }
+
+        let connection = try TFYSwiftDatabaseCenter.shared.open(named: "logger_privacy")
+        _ = try connection.query("SELECT ?;", bindings: [.text("production-secret")])
+
+        XCTAssertEqual(selectEvent?.bindings, ["text(<redacted>)"])
+        XCTAssertFalse(selectEvent?.bindings.joined().contains("production-secret") ?? true)
+        try TFYSwiftDatabaseCenter.shared.removeDatabase(named: "logger_privacy")
+    }
+
+    func testCountIgnoresQueryOrderingAndPagination() throws {
+        _ = try User.createTable()
+        try User.insert([
+            User(id: 0, username: "count_1", email: "count_1@example.com", nickname: "n", age: 1, cacheOnlyField: "", address: DemoAddress()),
+            User(id: 0, username: "count_2", email: "count_2@example.com", nickname: "n", age: 2, cacheOnlyField: "", address: DemoAddress()),
+            User(id: 0, username: "count_3", email: "count_3@example.com", nickname: "n", age: 3, cacheOnlyField: "", address: DemoAddress())
+        ])
+
+        let query = User.query()
+            .where(User.fields.age >= 2)
+            .orderBy(User.fields.age.descending())
+            .limit(1, offset: 1)
+
+        XCTAssertEqual(try User.count(query), 2)
+    }
+
+    func testTypedDeleteRequiresPredicateEvenWhenQueryHasLimit() throws {
+        _ = try User.createTable()
+        XCTAssertThrowsError(try User.delete(User.query().limit(1))) { error in
+            guard case TFYSwiftDBError.invalidQuery = error else {
+                return XCTFail("Expected invalidQuery error, got \(error)")
+            }
+        }
+    }
+
+    func testConnectionSerializesCompetingWriteOutsideRollback() throws {
+        _ = try User.createTable()
+        let connection = try TFYSwiftDatabaseCenter.shared.open(named: User.databaseName)
+        let transactionStarted = DispatchSemaphore(value: 0)
+        let allowRollback = DispatchSemaphore(value: 0)
+        let rollbackFinished = DispatchSemaphore(value: 0)
+        let competingWriteFinished = DispatchSemaphore(value: 0)
+
+        DispatchQueue.global().async {
+            do {
+                try connection.withTransaction {
+                    try User(
+                        id: 0,
+                        username: "rolled_back",
+                        email: "rolled_back@example.com",
+                        nickname: "n",
+                        age: 1,
+                        cacheOnlyField: "",
+                        address: DemoAddress()
+                    ).insert()
+                    transactionStarted.signal()
+                    _ = allowRollback.wait(timeout: .now() + 5)
+                    throw IntentionalRollback.test
+                }
+            } catch {}
+            rollbackFinished.signal()
+        }
+
+        XCTAssertEqual(transactionStarted.wait(timeout: .now() + 5), .success)
+
+        DispatchQueue.global().async {
+            try? User(
+                id: 0,
+                username: "committed",
+                email: "committed@example.com",
+                nickname: "n",
+                age: 2,
+                cacheOnlyField: "",
+                address: DemoAddress()
+            ).insert()
+            competingWriteFinished.signal()
+        }
+
+        XCTAssertEqual(competingWriteFinished.wait(timeout: .now() + 0.1), .timedOut)
+        allowRollback.signal()
+        XCTAssertEqual(rollbackFinished.wait(timeout: .now() + 5), .success)
+        XCTAssertEqual(competingWriteFinished.wait(timeout: .now() + 5), .success)
+        XCTAssertEqual(try User.fetchAll().map(\.username), ["committed"])
+    }
+}
+
+private enum IntentionalRollback: Error {
+    case test
 }
 
 private struct AuditLog: TFYSwiftDBModel {

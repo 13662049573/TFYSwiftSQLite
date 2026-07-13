@@ -1,7 +1,34 @@
 import Foundation
 
 public enum TFYSwiftModelMirror {
+    private static let schemaCacheLock = NSLock()
+    private static var schemaCache: [ObjectIdentifier: TFYSwiftModelSchema] = [:]
+
     public static func schema<Model: TFYSwiftDBModel>(for modelType: Model.Type) throws -> TFYSwiftModelSchema {
+        let cacheKey = ObjectIdentifier(modelType)
+        schemaCacheLock.lock()
+        let cached = schemaCache[cacheKey]
+        schemaCacheLock.unlock()
+        if let cached {
+            return cached
+        }
+
+        let schema = try buildSchema(for: modelType)
+        schemaCacheLock.lock()
+        schemaCache[cacheKey] = schema
+        schemaCacheLock.unlock()
+        return schema
+    }
+
+    /// Clears cached reflection metadata. Model schema declarations should normally be immutable;
+    /// this hook is intended for tests and advanced dynamic configurations.
+    public static func clearSchemaCache() {
+        schemaCacheLock.lock()
+        schemaCache.removeAll()
+        schemaCacheLock.unlock()
+    }
+
+    private static func buildSchema<Model: TFYSwiftDBModel>(for modelType: Model.Type) throws -> TFYSwiftModelSchema {
         let model = Model.init()
         let mirror = Mirror(reflecting: model)
         var columns: [TFYSwiftColumn] = []
@@ -34,8 +61,29 @@ public enum TFYSwiftModelMirror {
         }
 
         let primaryKeys = columns.filter(\.isPrimaryKey)
+        guard !columns.isEmpty else {
+            throw TFYSwiftDBError.invalidModel("\(String(describing: modelType)) does not declare any persisted columns.")
+        }
         if primaryKeys.count > 1 {
             throw TFYSwiftDBError.invalidModel("\(String(describing: modelType)) declares more than one primary key. v1 supports a single primary key.")
+        }
+
+        let duplicateColumnNames = Dictionary(grouping: columns, by: \.name)
+            .filter { $0.value.count > 1 }
+            .keys
+            .sorted()
+        guard duplicateColumnNames.isEmpty else {
+            throw TFYSwiftDBError.invalidModel(
+                "\(String(describing: modelType)) maps multiple properties to duplicate columns: \(duplicateColumnNames.joined(separator: ", "))."
+            )
+        }
+
+        for column in columns where column.isAutoIncrement {
+            guard column.isPrimaryKey, column.sqliteType == "INTEGER" else {
+                throw TFYSwiftDBError.invalidModel(
+                    "\(String(describing: modelType)).\(column.propertyName) can use autoIncrement only on an INTEGER primary key."
+                )
+            }
         }
 
         let normalizedCompositeIndexes = try normalizeCompositeIndexes(

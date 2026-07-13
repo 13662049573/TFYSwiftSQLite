@@ -4,6 +4,15 @@ public enum TFYSwiftSchemaMigrator {
     public static let journalTableName = "__tfy_schema_journal"
 
     public static func migrate<Model: TFYSwiftDBModel>(_ modelType: Model.Type, connection: TFYSwiftDBConnection) throws -> TFYSwiftMigrationReport {
+        try connection.withTransaction {
+            try performMigration(modelType, connection: connection)
+        }
+    }
+
+    private static func performMigration<Model: TFYSwiftDBModel>(
+        _ modelType: Model.Type,
+        connection: TFYSwiftDBConnection
+    ) throws -> TFYSwiftMigrationReport {
         try ensureJournalTable(using: connection)
         let schema = try TFYSwiftModelMirror.schema(for: modelType)
         try modelType.willMigrate(using: connection, schema: schema)
@@ -123,6 +132,7 @@ public enum TFYSwiftSchemaMigrator {
             "createdTableSQL": report.createdTableSQL,
             "addedColumnSQL": report.addedColumnSQL,
             "createdIndexSQL": report.createdIndexSQL,
+            "rebuildSQL": report.rebuildSQL,
             "warnings": report.warnings,
             "hasChanges": report.hasChanges
         ]

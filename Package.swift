@@ -23,5 +23,10 @@ let package = Package(
                 .linkedLibrary("sqlite3"),
             ]
         ),
+        .testTarget(
+            name: "TFYSwiftSQLiteKitTests",
+            dependencies: ["TFYSwiftSQLiteKit"],
+            path: "TFYSwiftSQLiteTests"
+        ),
     ]
 )

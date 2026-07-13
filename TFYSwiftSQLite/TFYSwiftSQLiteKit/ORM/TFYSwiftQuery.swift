@@ -146,6 +146,14 @@ public struct TFYQuery<Model: TFYSwiftDBModel> {
         guard !parts.isEmpty else { return (nil, allBindings) }
         return (parts.joined(separator: " "), allBindings)
     }
+
+    func renderPredicate() throws -> (clause: String?, bindings: [TFYSQLiteBindValue?]) {
+        if let validationError = predicate?.validationError {
+            throw validationError
+        }
+        guard let predicate else { return (nil, []) }
+        return ("WHERE \(predicate.sql)", predicate.bindings)
+    }
 }
 
 public extension TFYField {
