@@ -1,13 +1,14 @@
 Pod::Spec.new do |s|
   s.name             = 'TFYSwiftSQLiteKit'
 
-  s.version          = '1.0.4'
+  s.version          = '1.0.5'
 
   s.summary          = 'Swift ORM layer on SQLite3 with property-wrapper schema and migrations.'
 
   s.description      = <<-DESC
     TFYSwiftSQLiteKit maps Codable models to SQLite via reflection, supports @TFYPrimaryKey / @TFYColumn /
-    indexes / JSON columns, lightweight schema migration (TFYSwiftAutoTable), and WAL-backed connections.
+    indexes / JSON columns, type-safe queries, Date/Data/Bool scalar round-trips, lightweight schema
+    migration (TFYSwiftAutoTable), WAL-backed connections, and Privacy Manifest for App Store.
   DESC
   s.homepage         = 'https://github.com/13662049573/TFYSwiftSQLite'
 

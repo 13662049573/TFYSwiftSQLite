@@ -117,3 +117,19 @@ struct AuditEvent: TFYSwiftDBModel {
 
     static let messageField = field("message", as: String.self)
 }
+
+/// Covers Date / Data / Bool scalar round-trips.
+struct TypeSample: TFYSwiftDBModel {
+    @TFYPrimaryKey(autoIncrement: true)
+    var id: Int = 0
+
+    var flag: Bool = false
+    var createdAt: Date = Date(timeIntervalSinceReferenceDate: 0)
+    var blob: Data = Data()
+    var score: Double = 0
+
+    static var databaseName: String { "demo_main" }
+
+    static let flagField = field("flag", as: Bool.self)
+    static let scoreField = field("score", as: Double.self)
+}

@@ -104,7 +104,7 @@ public enum TFYSwiftORM {
         return try rows.map { row in
             let object = try TFYSwiftTypeMapper.jsonObject(from: row, schema: schema, modelType: modelType)
             let data = try JSONSerialization.data(withJSONObject: object)
-            return try JSONDecoder().decode(Model.self, from: data)
+            return try TFYSwiftTypeMapper.makeJSONDecoder().decode(Model.self, from: data)
         }
     }
 

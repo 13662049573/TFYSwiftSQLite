@@ -241,6 +241,9 @@ public enum TFYSwiftTypeMapper {
         }
 
         let typeName = column.swiftType
+            .replacingOccurrences(of: "FoundationEssentials.", with: "")
+            .replacingOccurrences(of: "Foundation.", with: "")
+            .replacingOccurrences(of: "Swift.", with: "")
         switch typeName {
         case "Int", "Int8", "Int16", "Int32", "Int64", "UInt", "UInt8", "UInt16", "UInt32", "UInt64":
             return numericValue(from: sqliteValue)
@@ -255,8 +258,19 @@ public enum TFYSwiftTypeMapper {
         case "Date":
             return doubleValue(from: sqliteValue)
         default:
-            throw TFYSwiftDBError.decoding("Unsupported decode type \(typeName) for column \(column.name).")
+            throw TFYSwiftDBError.decoding("Unsupported decode type \(column.swiftType) for column \(column.name).")
         }
+    }
+
+    /// Decoder for row→JSON→Model. Dates are stored as `timeIntervalSinceReferenceDate`.
+    public nonisolated static func makeJSONDecoder() -> JSONDecoder {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let value = try container.decode(Double.self)
+            return Date(timeIntervalSinceReferenceDate: value)
+        }
+        return decoder
     }
 
     public nonisolated static func unwrapAnyOptional(_ value: Any) -> Any? {
