@@ -27,7 +27,7 @@
 或在其它 Package 中依赖：
 
 ```swift
-.package(url: "https://github.com/13662049573/TFYSwiftSQLite.git", from: "1.0.3"),
+.package(url: "https://github.com/13662049573/TFYSwiftSQLite.git", from: "1.0.4"),
 ```
 
 ```swift
@@ -40,7 +40,7 @@
 ### CocoaPods
 
 ```ruby
-pod 'TFYSwiftSQLiteKit', '~> 1.0.3'
+pod 'TFYSwiftSQLiteKit'
 ```
 
 `TFYSwiftSQLiteKit` 的 pod 会按库当前目录结构收录以下源码目录，并自动链接 `sqlite3`：
@@ -219,10 +219,8 @@ swift build -c release
 ## 系统要求
 
 - Swift 5.9+
-- iOS 13+
-- macOS 13+
-- tvOS 13+
-- watchOS 6+
+- iOS 15+
+- macOS 15+
 - 示例 Xcode 工程内应用目标的 **IPHONEOS_DEPLOYMENT_TARGET** 可能与上述不同，以工程设置为准
 
 ## 许可
