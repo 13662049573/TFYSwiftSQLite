@@ -1,31 +1,35 @@
 import Foundation
 
 public enum TFYSwiftModelMirror {
-    private static let schemaCacheLock = NSLock()
-    private static var schemaCache: [ObjectIdentifier: TFYSwiftModelSchema] = [:]
+    private final class Cache: @unchecked Sendable {
+        let lock = NSLock()
+        var schemas: [ObjectIdentifier: TFYSwiftModelSchema] = [:]
+    }
+
+    private static let cache = Cache()
 
     public static func schema<Model: TFYSwiftDBModel>(for modelType: Model.Type) throws -> TFYSwiftModelSchema {
         let cacheKey = ObjectIdentifier(modelType)
-        schemaCacheLock.lock()
-        let cached = schemaCache[cacheKey]
-        schemaCacheLock.unlock()
+        cache.lock.lock()
+        let cached = cache.schemas[cacheKey]
+        cache.lock.unlock()
         if let cached {
             return cached
         }
 
         let schema = try buildSchema(for: modelType)
-        schemaCacheLock.lock()
-        schemaCache[cacheKey] = schema
-        schemaCacheLock.unlock()
+        cache.lock.lock()
+        cache.schemas[cacheKey] = schema
+        cache.lock.unlock()
         return schema
     }
 
     /// Clears cached reflection metadata. Model schema declarations should normally be immutable;
     /// this hook is intended for tests and advanced dynamic configurations.
     public static func clearSchemaCache() {
-        schemaCacheLock.lock()
-        schemaCache.removeAll()
-        schemaCacheLock.unlock()
+        cache.lock.lock()
+        cache.schemas.removeAll()
+        cache.lock.unlock()
     }
 
     private static func buildSchema<Model: TFYSwiftDBModel>(for modelType: Model.Type) throws -> TFYSwiftModelSchema {
@@ -64,6 +68,11 @@ public enum TFYSwiftModelMirror {
         guard !columns.isEmpty else {
             throw TFYSwiftDBError.invalidModel("\(String(describing: modelType)) does not declare any persisted columns.")
         }
+        try validateIdentifier(modelType.tableName, kind: "table", modelType: modelType)
+        try validateIdentifier(modelType.databaseName, kind: "database", modelType: modelType)
+        for column in columns {
+            try validateIdentifier(column.name, kind: "column", modelType: modelType)
+        }
         if primaryKeys.count > 1 {
             throw TFYSwiftDBError.invalidModel("\(String(describing: modelType)) declares more than one primary key. v1 supports a single primary key.")
         }
@@ -92,7 +101,7 @@ public enum TFYSwiftModelMirror {
             modelType: modelType
         )
 
-        return TFYSwiftModelSchema(
+        let schema = TFYSwiftModelSchema(
             modelName: String(describing: modelType),
             tableName: modelType.tableName,
             databaseName: modelType.databaseName,
@@ -100,6 +109,17 @@ public enum TFYSwiftModelMirror {
             columns: columns,
             compositeIndexes: normalizedCompositeIndexes
         )
+        let indexes = TFYSwiftIndexBuilder.expectedIndexes(for: schema)
+        for index in indexes {
+            try validateIdentifier(index.name, kind: "index", modelType: modelType)
+        }
+        let duplicateIndexNames = Dictionary(grouping: indexes, by: \.name).filter { $0.value.count > 1 }.keys.sorted()
+        guard duplicateIndexNames.isEmpty else {
+            throw TFYSwiftDBError.invalidModel(
+                "\(String(describing: modelType)) declares duplicate index names: \(duplicateIndexNames.joined(separator: ", "))."
+            )
+        }
+        return schema
     }
 
     public static func resolveColumnName<Model: TFYSwiftDBModel>(forDeclaredField fieldName: String, in modelType: Model.Type) throws -> String {
@@ -181,6 +201,15 @@ public enum TFYSwiftModelMirror {
             }
 
             return TFYCompositeIndex(columns: normalizedColumns, unique: index.unique, name: index.name)
+        }
+    }
+
+    private static func validateIdentifier<Model>(_ value: String, kind: String, modelType: Model.Type) throws {
+        guard !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              !value.unicodeScalars.contains(where: CharacterSet.controlCharacters.contains) else {
+            throw TFYSwiftDBError.invalidModel(
+                "\(String(describing: modelType)) declares an empty or invalid \(kind) identifier."
+            )
         }
     }
 }

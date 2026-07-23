@@ -42,9 +42,25 @@ public enum TFYSwiftSchemaMigrator {
         let existingColumns = try connection.pragmaTableInfo(tableName: schema.tableName)
         let existingColumnMap = Dictionary(uniqueKeysWithValues: existingColumns.map { ($0.name, $0) })
         var rebuildReasons: [String] = []
+        let renamedColumns = schema.migrationPolicy == .rebuildTable
+            ? try modelType.renamedColumns(for: schema, existingColumns: existingColumns)
+            : [:]
+
+        for (newName, oldName) in renamedColumns {
+            guard schema.column(named: newName) != nil else {
+                throw TFYSwiftDBError.migrationConflict("Rename destination '\(newName)' is not declared by \(schema.modelName).")
+            }
+            guard existingColumnMap[oldName] != nil else {
+                throw TFYSwiftDBError.migrationConflict("Rename source '\(oldName)' does not exist in table '\(schema.tableName)'.")
+            }
+        }
 
         for column in schema.persistedColumns {
             if existingColumnMap[column.name] == nil {
+                if renamedColumns[column.name] != nil {
+                    rebuildReasons.append("Column \(column.name) is renamed from \(renamedColumns[column.name]!).")
+                    continue
+                }
                 let sql = TFYSwiftTableBuilder.addColumnSQL(tableName: schema.tableName, column: column)
                 try connection.execute(sql)
                 report.addAddedColumnSQL(sql)
@@ -94,7 +110,14 @@ public enum TFYSwiftSchemaMigrator {
         let existingSignatures = Set(existingIndexes.map { "\($0.unique ? "unique" : "index")|\($0.columns.joined(separator: ","))" })
         let existingNames = Set(existingIndexes.map(\.name))
 
-        for index in expectedIndexes where !existingNames.contains(index.name) && !existingSignatures.contains(index.signature) {
+        for index in expectedIndexes {
+            if existingNames.contains(index.name) {
+                guard existingIndexes.contains(where: { $0.name == index.name && "\($0.unique ? "unique" : "index")|\($0.columns.joined(separator: ","))" == index.signature }) else {
+                    throw TFYSwiftDBError.migrationConflict("Index '\(index.name)' exists with a different definition.")
+                }
+                continue
+            }
+            guard !existingSignatures.contains(index.signature) else { continue }
             let sql = TFYSwiftIndexBuilder.createIndexSQL(for: index)
             try connection.execute(sql)
             report.addCreatedIndexSQL(sql)
@@ -174,7 +197,7 @@ public enum TFYSwiftSchemaMigrator {
         report: inout TFYSwiftMigrationReport,
         reasons: [String]
     ) throws {
-        let temporaryTableName = "__tfy_rebuild_\(schema.tableName)_\(Int(Date().timeIntervalSince1970))"
+        let temporaryTableName = "__tfy_rebuild_\(schema.tableName)_\(UUID().uuidString.replacingOccurrences(of: "-", with: ""))"
         let existingColumnNames = Set(existingColumns.map(\.name))
         let renamedColumns = try modelType.renamedColumns(for: schema, existingColumns: existingColumns)
         let customExpressions = try modelType.rebuildExpressions(for: schema, existingColumns: existingColumns)
@@ -183,7 +206,7 @@ public enum TFYSwiftSchemaMigrator {
         var selectExpressions: [String] = []
 
         for column in schema.persistedColumns {
-            let expression = customExpressions[column.name]
+            let expression = try customExpressions[column.name]
                 ?? defaultRebuildExpression(
                     for: column,
                     existingColumnNames: existingColumnNames,
@@ -244,7 +267,7 @@ public enum TFYSwiftSchemaMigrator {
         for column: TFYSwiftColumn,
         existingColumnNames: Set<String>,
         renamedColumns: [String: String]
-    ) -> String? {
+    ) throws -> String? {
         if existingColumnNames.contains(column.name) {
             return TFYSwiftSQL.escapeIdentifier(column.name)
         }
@@ -257,6 +280,8 @@ public enum TFYSwiftSchemaMigrator {
         if column.isOptional {
             return "NULL"
         }
-        return "NULL"
+        throw TFYSwiftDBError.migrationConflict(
+            "Cannot rebuild required column '\(column.name)' without an existing value, rename source, default, or custom expression."
+        )
     }
 }

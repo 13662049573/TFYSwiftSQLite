@@ -224,11 +224,11 @@ public extension TFYAnyField {
     }
 
     func contains(_ value: String) -> TFYPredicate<Model> {
-        like("%\(value)%")
+        escapedLikePredicate(name: name, value: value, prefix: "%", suffix: "%", validationError: validationError)
     }
 
     func starts(with value: String) -> TFYPredicate<Model> {
-        like("\(value)%")
+        escapedLikePredicate(name: name, value: value, suffix: "%", validationError: validationError)
     }
 }
 
@@ -238,11 +238,11 @@ public extension TFYField where Value == String {
     }
 
     func contains(_ value: String) -> TFYPredicate<Model> {
-        like("%\(value)%")
+        escapedLikePredicate(name: name, value: value, prefix: "%", suffix: "%", validationError: validationError)
     }
 
     func starts(with value: String) -> TFYPredicate<Model> {
-        like("\(value)%")
+        escapedLikePredicate(name: name, value: value, suffix: "%", validationError: validationError)
     }
 }
 
@@ -311,9 +311,13 @@ private func comparisonPredicate<Model, Value>(_ field: TFYField<Model, Value>, 
         return TFYPredicate(sql: "1 = 0", validationError: validationError)
     }
     do {
+        let binding = try TFYSwiftTypeMapper.userBindValue(for: value)
+        if binding == .null, op == "=" || op == "!=" {
+            return TFYPredicate(sql: "\(field.escapedName) IS \(op == "!=" ? "NOT " : "")NULL")
+        }
         return TFYPredicate(
             sql: "\(field.escapedName) \(op) ?",
-            bindings: [try TFYSwiftTypeMapper.userBindValue(for: value)]
+            bindings: [binding]
         )
     } catch let error as TFYSwiftDBError {
         return TFYPredicate(sql: "1 = 0", validationError: error)
@@ -330,9 +334,13 @@ private func anyComparisonPredicate<Model>(_ field: TFYAnyField<Model>, _ op: St
         return TFYPredicate(sql: "1 = 0", validationError: validationError)
     }
     do {
+        let binding = try TFYSwiftTypeMapper.userBindValue(for: value)
+        if binding == .null, op == "=" || op == "!=" {
+            return TFYPredicate(sql: "\(field.escapedName) IS \(op == "!=" ? "NOT " : "")NULL")
+        }
         return TFYPredicate(
             sql: "\(field.escapedName) \(op) ?",
-            bindings: [try TFYSwiftTypeMapper.userBindValue(for: value)]
+            bindings: [binding]
         )
     } catch let error as TFYSwiftDBError {
         return TFYPredicate(sql: "1 = 0", validationError: error)
@@ -346,4 +354,22 @@ private func anyComparisonPredicate<Model>(_ field: TFYAnyField<Model>, _ op: St
 
 private func combineValidationErrors(_ lhs: TFYSwiftDBError?, _ rhs: TFYSwiftDBError?) -> TFYSwiftDBError? {
     lhs ?? rhs
+}
+
+private func escapedLikePredicate<Model>(
+    name: String,
+    value: String,
+    prefix: String = "",
+    suffix: String = "",
+    validationError: TFYSwiftDBError?
+) -> TFYPredicate<Model> {
+    let escaped = value
+        .replacingOccurrences(of: "\\", with: "\\\\")
+        .replacingOccurrences(of: "%", with: "\\%")
+        .replacingOccurrences(of: "_", with: "\\_")
+    return TFYPredicate(
+        sql: "\(TFYSwiftSQL.escapeIdentifier(name)) LIKE ? ESCAPE '\\'",
+        bindings: [.text("\(prefix)\(escaped)\(suffix)")],
+        validationError: validationError
+    )
 }

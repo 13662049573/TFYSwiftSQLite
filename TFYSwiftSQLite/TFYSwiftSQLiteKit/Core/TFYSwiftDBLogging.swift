@@ -36,31 +36,35 @@ public enum TFYSwiftSQLBindingLogPolicy: Equatable, Sendable {
 }
 
 public enum TFYSwiftDBRuntime {
-    private static let lock = NSLock()
-    private static var sqlLogger: ((TFYSwiftSQLLogEvent) -> Void)?
-    private static var bindingLogPolicy: TFYSwiftSQLBindingLogPolicy = .redacted
+    private final class State: @unchecked Sendable {
+        let lock = NSLock()
+        var sqlLogger: ((TFYSwiftSQLLogEvent) -> Void)?
+        var bindingLogPolicy: TFYSwiftSQLBindingLogPolicy = .redacted
+    }
+
+    private static let state = State()
 
     public static func setSQLLogger(
         _ logger: ((TFYSwiftSQLLogEvent) -> Void)?,
         bindingPolicy: TFYSwiftSQLBindingLogPolicy = .redacted
     ) {
-        lock.lock()
-        sqlLogger = logger
-        bindingLogPolicy = bindingPolicy
-        lock.unlock()
+        state.lock.lock()
+        state.sqlLogger = logger
+        state.bindingLogPolicy = bindingPolicy
+        state.lock.unlock()
     }
 
     static func emit(_ event: TFYSwiftSQLLogEvent) {
-        lock.lock()
-        let logger = sqlLogger
-        lock.unlock()
+        state.lock.lock()
+        let logger = state.sqlLogger
+        state.lock.unlock()
         logger?(event)
     }
 
     static func describe(_ bindings: [TFYSQLiteBindValue?]) -> [String] {
-        lock.lock()
-        let policy = bindingLogPolicy
-        lock.unlock()
+        state.lock.lock()
+        let policy = state.bindingLogPolicy
+        state.lock.unlock()
 
         return bindings.map { value in
             let value = value ?? .null

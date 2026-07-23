@@ -12,6 +12,7 @@ final class TFYSwiftSQLiteKitTests: XCTestCase {
         try TFYSwiftDatabaseCenter.shared.removeDatabase(named: "rebuild")
         try TFYSwiftDatabaseCenter.shared.removeDatabase(named: "binding_validation")
         try TFYSwiftDatabaseCenter.shared.removeDatabase(named: "logger_privacy")
+        try TFYSwiftDatabaseCenter.shared.removeDatabase(named: "edge_cases")
         TFYSwiftDBRuntime.setSQLLogger(nil)
     }
 
@@ -370,6 +371,38 @@ final class TFYSwiftSQLiteKitTests: XCTestCase {
         XCTAssertEqual(competingWriteFinished.wait(timeout: .now() + 5), .success)
         XCTAssertEqual(try User.fetchAll().map(\.username), ["committed"])
     }
+
+    func testAutoIncrementOnlyModelUsesDefaultValues() throws {
+        _ = try AutoOnly.createTable()
+        try AutoOnly().insert()
+        XCTAssertEqual(try AutoOnly.count(), 1)
+        XCTAssertThrowsError(try AutoOnly().update())
+    }
+
+    func testTypedQueryHandlesNullAndLiteralLikeCharacters() throws {
+        _ = try QueryEdge.createTable()
+        try QueryEdge.insert([
+            QueryEdge(id: 0, value: nil, label: "100%_done"),
+            QueryEdge(id: 0, value: "set", label: "100XXdone")
+        ])
+
+        XCTAssertEqual(try QueryEdge.fetchAll(QueryEdge.query().where(QueryEdge.valueField == nil)).count, 1)
+        XCTAssertEqual(try QueryEdge.fetchAll(QueryEdge.query().where(QueryEdge.labelField.contains("%_"))).count, 1)
+    }
+
+    func testUnsignedBindingOverflowThrowsInsteadOfTrapping() throws {
+        XCTAssertThrowsError(try TFYSwiftTypeMapper.userBindValue(for: UInt64.max))
+        XCTAssertEqual(try TFYSwiftTypeMapper.userBindValue(for: UInt8.max), .integer(255))
+        XCTAssertEqual(try TFYSwiftTypeMapper.userBindValue(for: Float(1.5)), .double(1.5))
+    }
+
+    func testRenameMigrationCopiesOriginalColumn() throws {
+        _ = try LegacyRename.createTable()
+        try LegacyRename(id: 0, oldValue: "preserved").insert()
+
+        _ = try Renamed.createTable()
+        XCTAssertEqual(try Renamed.fetchAll().first?.newValue, "preserved")
+    }
 }
 
 private enum IntentionalRollback: Error {
@@ -448,5 +481,37 @@ private struct InvalidCompositeIndexModel: TFYSwiftDBModel {
         [
             TFYCompositeIndex(columns: ["username", "missingColumn"], unique: true)
         ]
+    }
+}
+
+private struct AutoOnly: TFYSwiftDBModel {
+    @TFYPrimaryKey(autoIncrement: true) var id: Int = 0
+    static var databaseName: String { "edge_cases" }
+}
+
+private struct QueryEdge: TFYSwiftDBModel {
+    @TFYPrimaryKey(autoIncrement: true) var id: Int = 0
+    var value: String?
+    var label: String = ""
+    static var databaseName: String { "edge_cases" }
+    static let valueField = field("value", as: String?.self)
+    static let labelField = field("label", as: String.self)
+}
+
+private struct LegacyRename: TFYSwiftDBModel {
+    @TFYPrimaryKey(autoIncrement: true) var id: Int = 0
+    var oldValue: String = ""
+    static var tableName: String { "rename_test" }
+    static var databaseName: String { "edge_cases" }
+}
+
+private struct Renamed: TFYSwiftDBModel {
+    @TFYPrimaryKey(autoIncrement: true) var id: Int = 0
+    var newValue: String = ""
+    static var tableName: String { "rename_test" }
+    static var databaseName: String { "edge_cases" }
+    static var migrationPolicy: TFYMigrationPolicy { .rebuildTable }
+    static func renamedColumns(for schema: TFYSwiftModelSchema, existingColumns: [TFYSQLiteTableColumnInfo]) throws -> [String: String] {
+        ["newValue": "oldValue"]
     }
 }

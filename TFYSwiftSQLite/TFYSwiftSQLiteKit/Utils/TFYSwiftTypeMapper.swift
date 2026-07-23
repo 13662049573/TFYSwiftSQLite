@@ -136,7 +136,7 @@ public enum TFYSwiftTypeMapper {
         case let int as Int64:
             return .integer(int)
         case let uint as UInt:
-            return .integer(Int64(uint))
+            return .integer(try checkedInt64(uint, context: column.name))
         case let uint as UInt8:
             return .integer(Int64(uint))
         case let uint as UInt16:
@@ -144,7 +144,7 @@ public enum TFYSwiftTypeMapper {
         case let uint as UInt32:
             return .integer(Int64(uint))
         case let uint as UInt64:
-            return .integer(Int64(uint))
+            return .integer(try checkedInt64(uint, context: column.name))
         case let double as Double:
             return .double(double)
         case let float as Float:
@@ -175,8 +175,26 @@ public enum TFYSwiftTypeMapper {
             return .integer(Int64(int))
         case let int as Int64:
             return .integer(int)
+        case let int as Int8:
+            return .integer(Int64(int))
+        case let int as Int16:
+            return .integer(Int64(int))
+        case let int as Int32:
+            return .integer(Int64(int))
+        case let uint as UInt:
+            return .integer(try checkedInt64(uint, context: "query binding"))
+        case let uint as UInt8:
+            return .integer(Int64(uint))
+        case let uint as UInt16:
+            return .integer(Int64(uint))
+        case let uint as UInt32:
+            return .integer(Int64(uint))
+        case let uint as UInt64:
+            return .integer(try checkedInt64(uint, context: "query binding"))
         case let double as Double:
             return .double(double)
+        case let float as Float:
+            return .double(Double(float))
         case let string as String:
             return .text(string)
         case let data as Data:
@@ -311,5 +329,12 @@ public enum TFYSwiftTypeMapper {
         let start = name.index(name.startIndex, offsetBy: "Swift.Optional<".count)
         let end = name.index(before: name.endIndex)
         return String(name[start..<end])
+    }
+
+    private nonisolated static func checkedInt64<T: BinaryInteger>(_ value: T, context: String) throws -> Int64 {
+        guard let converted = Int64(exactly: value) else {
+            throw TFYSwiftDBError.unsupportedType("Unsigned integer for \(context) exceeds SQLite INTEGER range.")
+        }
+        return converted
     }
 }

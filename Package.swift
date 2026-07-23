@@ -19,6 +19,9 @@ let package = Package(
         .target(
             name: "TFYSwiftSQLiteKit",
             path: "TFYSwiftSQLite/TFYSwiftSQLiteKit",
+            resources: [
+                .process("PrivacyInfo.xcprivacy"),
+            ],
             linkerSettings: [
                 .linkedLibrary("sqlite3"),
             ]

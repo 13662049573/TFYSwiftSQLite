@@ -48,6 +48,9 @@ public enum TFYSwiftORM {
             .filter { !$0.isPrimaryKey }
             .map { "\(TFYSwiftSQL.escapeIdentifier($0.name)) = ?" }
             .joined(separator: ", ")
+        guard !assignments.isEmpty else {
+            throw TFYSwiftDBError.invalidModel("\(schema.modelName) has no non-primary-key columns to update.")
+        }
 
         let bindings = try schema.persistedColumns
             .filter { !$0.isPrimaryKey }
@@ -254,9 +257,12 @@ public enum TFYSwiftORM {
             bindings.append(bindValue)
         }
 
+        let verb = orReplace ? "INSERT OR REPLACE" : "INSERT"
+        guard !insertColumns.isEmpty else {
+            return ("\(verb) INTO \(TFYSwiftSQL.escapeIdentifier(schema.tableName)) DEFAULT VALUES;", bindings)
+        }
         let quotedColumns = insertColumns.map { TFYSwiftSQL.escapeIdentifier($0.name) }.joined(separator: ", ")
         let placeholders = Array(repeating: "?", count: insertColumns.count).joined(separator: ", ")
-        let verb = orReplace ? "INSERT OR REPLACE" : "INSERT"
         let sql = """
         \(verb) INTO \(TFYSwiftSQL.escapeIdentifier(schema.tableName)) (\(quotedColumns))
         VALUES (\(placeholders));
