@@ -97,8 +97,10 @@ public enum TFYSwiftTypeMapper {
         case let uint as UInt64:
             return "\(uint)"
         case let double as Double:
+            guard double.isFinite else { return nil }
             return "\(double)"
         case let float as Float:
+            guard float.isFinite else { return nil }
             return "\(float)"
         default:
             return nil
@@ -146,8 +148,10 @@ public enum TFYSwiftTypeMapper {
         case let uint as UInt64:
             return .integer(try checkedInt64(uint, context: column.name))
         case let double as Double:
+            try validateFinite(double, context: column.name)
             return .double(double)
         case let float as Float:
+            try validateFinite(Double(float), context: column.name)
             return .double(Double(float))
         case let string as String:
             return .text(string)
@@ -192,8 +196,10 @@ public enum TFYSwiftTypeMapper {
         case let uint as UInt64:
             return .integer(try checkedInt64(uint, context: "query binding"))
         case let double as Double:
+            try validateFinite(double, context: "query binding")
             return .double(double)
         case let float as Float:
+            try validateFinite(Double(float), context: "query binding")
             return .double(Double(float))
         case let string as String:
             return .text(string)
@@ -285,7 +291,7 @@ public enum TFYSwiftTypeMapper {
         case let .integer(value):
             return value
         case let .double(value):
-            return Int64(value)
+            return clampedInt64(value)
         case let .text(value):
             return Int64(value) ?? 0
         case .blob, .null:
@@ -350,5 +356,19 @@ public enum TFYSwiftTypeMapper {
             throw TFYSwiftDBError.unsupportedType("Unsigned integer for \(context) exceeds SQLite INTEGER range.")
         }
         return converted
+    }
+
+    private nonisolated static func validateFinite(_ value: Double, context: String) throws {
+        guard value.isFinite else {
+            throw TFYSwiftDBError.unsupportedType("Floating-point value for \(context) must be finite.")
+        }
+    }
+
+    private nonisolated static func clampedInt64(_ value: Double) -> Int64 {
+        guard value.isFinite else { return 0 }
+        let truncated = value.rounded(.towardZero)
+        if truncated >= Double(Int64.max) { return Int64.max }
+        if truncated <= Double(Int64.min) { return Int64.min }
+        return Int64(truncated)
     }
 }

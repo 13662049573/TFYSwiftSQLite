@@ -128,9 +128,23 @@ public final class TFYSwiftDBStatement: @unchecked Sendable {
             var row: [String: TFYSQLiteValue] = [:]
             for index in 0..<count {
                 let name = String(cString: sqlite3_column_name(statement, index))
-                row[name] = columnValue(at: index)
+                row[name] = columnValueUnlocked(at: index)
             }
             return row
+        }
+    }
+
+    public var columnCount: Int {
+        withLock { Int(sqlite3_column_count(statement)) }
+    }
+
+    /// Returns a value from the current row, or nil when the index is out of range.
+    public func value(at index: Int) -> TFYSQLiteValue? {
+        withLock {
+            guard index >= 0, index < Int(sqlite3_column_count(statement)) else {
+                return nil
+            }
+            return columnValueUnlocked(at: Int32(index))
         }
     }
 
@@ -185,7 +199,7 @@ public final class TFYSwiftDBStatement: @unchecked Sendable {
         return try work()
     }
 
-    private func columnValue(at index: Int32) -> TFYSQLiteValue {
+    private func columnValueUnlocked(at index: Int32) -> TFYSQLiteValue {
         switch sqlite3_column_type(statement, index) {
         case SQLITE_INTEGER:
             return .integer(sqlite3_column_int64(statement, index))

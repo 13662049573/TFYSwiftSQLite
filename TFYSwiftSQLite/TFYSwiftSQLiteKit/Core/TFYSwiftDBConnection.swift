@@ -46,6 +46,7 @@ public struct TFYSQLiteTableColumnInfo: Equatable, Sendable {
     public let type: String
     public let defaultValueSQL: String?
     public let isPrimaryKey: Bool
+    public let isNotNull: Bool
 }
 
 public struct TFYSQLiteIndexInfo: Equatable, Sendable {
@@ -126,10 +127,41 @@ public final class TFYSwiftDBConnection: @unchecked Sendable {
         }
     }
 
+    /// Number of rows changed by the most recently completed INSERT, UPDATE, or DELETE.
+    public var changes: Int64 {
+        withConnectionLock {
+            guard let handle else { return 0 }
+            if #available(iOS 15.4, macOS 12.3, tvOS 15.4, watchOS 8.5, *) {
+                return sqlite3_changes64(handle)
+            }
+            return Int64(sqlite3_changes(handle))
+        }
+    }
+
+    /// Total number of rows changed since this connection was opened.
+    public var totalChanges: Int64 {
+        withConnectionLock {
+            guard let handle else { return 0 }
+            if #available(iOS 15.4, macOS 12.3, tvOS 15.4, watchOS 8.5, *) {
+                return sqlite3_total_changes64(handle)
+            }
+            return Int64(sqlite3_total_changes(handle))
+        }
+    }
+
     public func close() throws {
         try withConnectionLock {
             guard let handle else { return }
-            let code = sqlite3_close_v2(handle)
+            guard transactionDepth == 0 else {
+                throw TFYSwiftDBError.closeDatabase(
+                    path: path,
+                    message: "Cannot close a database from inside an active transaction."
+                )
+            }
+            // sqlite3_close_v2 reports success while outstanding statements keep a
+            // zombie connection alive. A public close must instead fail visibly so
+            // callers do not remove or replace a database that is still in use.
+            let code = sqlite3_close(handle)
             guard code == SQLITE_OK else {
                 throw TFYSwiftDBError.closeDatabase(
                     path: path,
@@ -201,6 +233,29 @@ public final class TFYSwiftDBConnection: @unchecked Sendable {
         }
     }
 
+    public func query(
+        _ statement: TFYSwiftDBStatement,
+        bindings: [TFYSQLiteBindValue?] = []
+    ) throws -> [[String: TFYSQLiteValue]] {
+        try withConnectionLock {
+            let handle = try requireHandle()
+            guard statement.belongs(to: handle) else {
+                throw TFYSwiftDBError.invalidQuery("A prepared statement must be queried by the connection that created it.")
+            }
+            return try measure(statement.sql, bindings: bindings) {
+                try statement.reset()
+                try statement.clearBindings()
+                try statement.bind(bindings)
+
+                var rows: [[String: TFYSQLiteValue]] = []
+                while try statement.step() {
+                    rows.append(statement.row())
+                }
+                return rows
+            }
+        }
+    }
+
     public func withTransaction<T>(_ block: () throws -> T) throws -> T {
         try withConnectionLock {
             let currentDepth = transactionDepth
@@ -257,7 +312,8 @@ public final class TFYSwiftDBConnection: @unchecked Sendable {
                 name: name,
                 type: type,
                 defaultValueSQL: row["dflt_value"].map(TFYSwiftTypeMapper.stringValue),
-                isPrimaryKey: row["pk"].map(TFYSwiftTypeMapper.numericValue(from:)) == 1
+                isPrimaryKey: row["pk"].map(TFYSwiftTypeMapper.numericValue(from:)) == 1,
+                isNotNull: row["notnull"].map(TFYSwiftTypeMapper.numericValue(from:)) == 1
             )
         }
     }
@@ -289,8 +345,19 @@ public final class TFYSwiftDBConnection: @unchecked Sendable {
     }
 
     public func scalar(_ sql: String, bindings: [TFYSQLiteBindValue?] = []) throws -> TFYSQLiteValue? {
-        let rows = try query(sql, bindings: bindings)
-        return rows.first?.values.first
+        try withConnectionLock {
+            let handle = try requireHandle()
+            return try measure(sql, bindings: bindings) {
+                let statement = try TFYSwiftDBStatement(
+                    connection: handle,
+                    sql: sql,
+                    connectionLock: connectionLock
+                )
+                try statement.bind(bindings)
+                guard try statement.step() else { return nil }
+                return statement.value(at: 0)
+            }
+        }
     }
 
     private func requireHandle() throws -> OpaquePointer {
@@ -350,8 +417,11 @@ public final class TFYSwiftDBConnection: @unchecked Sendable {
                 "busyTimeout must be finite and between 0 and \(Double(Int32.max) / 1_000) seconds."
             )
         }
-        if let checkpoint = configuration.walAutoCheckpoint, checkpoint < 0 {
-            throw TFYSwiftDBError.invalidConfiguration("walAutoCheckpoint must be greater than or equal to zero.")
+        if let checkpoint = configuration.walAutoCheckpoint,
+           checkpoint < 0 || checkpoint > Int(Int32.max) {
+            throw TFYSwiftDBError.invalidConfiguration(
+                "walAutoCheckpoint must be between 0 and \(Int32.max)."
+            )
         }
     }
 }

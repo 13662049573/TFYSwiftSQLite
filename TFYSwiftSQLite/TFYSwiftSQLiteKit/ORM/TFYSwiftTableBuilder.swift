@@ -39,6 +39,10 @@ public enum TFYSwiftTableBuilder {
             parts.append("DEFAULT \(defaultSQL)")
         }
 
+        if !column.isOptional {
+            parts.append("NOT NULL")
+        }
+
         return parts.joined(separator: " ")
     }
 }

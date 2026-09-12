@@ -1,14 +1,15 @@
 Pod::Spec.new do |s|
   s.name             = 'TFYSwiftSQLiteKit'
 
-  s.version          = '1.0.5'
+  s.version          = '1.0.6'
 
   s.summary          = 'Swift ORM layer on SQLite3 with property-wrapper schema and migrations.'
 
   s.description      = <<-DESC
     TFYSwiftSQLiteKit maps Codable models to SQLite via reflection, supports @TFYPrimaryKey / @TFYColumn /
-    indexes / JSON columns, type-safe queries, Date/Data/Bool scalar round-trips, lightweight schema
-    migration (TFYSwiftAutoTable), WAL-backed connections, and Privacy Manifest for App Store.
+    indexes / JSON columns, type-safe and prepared queries, Date/Data/Bool scalar round-trips,
+    safe schema migration, WAL-backed connections, Swift concurrency support, and an App Store
+    Privacy Manifest. CocoaPods and Swift Package Manager ship the same complete runtime sources.
   DESC
   s.homepage         = 'https://github.com/13662049573/TFYSwiftSQLite'
 
@@ -24,37 +25,44 @@ Pod::Spec.new do |s|
 
   s.module_name      = 'TFYSwiftSQLiteKit'
 
-  s.ios.deployment_target      = '15.0'
-  s.osx.deployment_target      = '15.0'
-
+  s.platforms        = {
+    :ios     => '15.0',
+    :osx     => '13.0',
+    :tvos    => '13.0',
+    :watchos => '6.0'
+  }
 
   s.frameworks       = 'Foundation'
   s.libraries        = 'sqlite3'
 
   kit = 'TFYSwiftSQLite/TFYSwiftSQLiteKit'
-
-  # Folder layout kept 1:1 with the library source tree.
-  # Internal dependency graph (code-level, documented here for maintenance):
-  # - Annotation -> Utils
-  # - Manager -> Core
-  # - Reflection -> Annotation/Core/ORM/Utils
-  # - Schema -> Core/Manager/ORM/Reflection
-  # - Utils -> Core/ORM
-  # - ORM -> Core/Manager/Reflection/Schema/Utils
-  #
-  # The runtime currently contains circular references across ORM/Utils/Reflection/Schema,
-  # so CocoaPods integration ships the full kit as one pod while preserving folder-based globs.
-  s.source_files = [
-    "#{kit}/Annotation/**/*.swift",
-    "#{kit}/Core/**/*.swift",
-    "#{kit}/Manager/**/*.swift",
-    "#{kit}/ORM/**/*.swift",
-    "#{kit}/Reflection/**/*.swift",
-    "#{kit}/Schema/**/*.swift",
-    "#{kit}/Utils/**/*.swift"
+  library_sources = [
+    'Annotation/TFYSwiftColumnAnnotations.swift',
+    'Core/TFYSwiftDBConnection.swift',
+    'Core/TFYSwiftDBError.swift',
+    'Core/TFYSwiftDBLogging.swift',
+    'Core/TFYSwiftDBStatement.swift',
+    'Manager/TFYSwiftDatabaseCenter.swift',
+    'ORM/TFYSwiftColumn.swift',
+    'ORM/TFYSwiftDBModel.swift',
+    'ORM/TFYSwiftORM.swift',
+    'ORM/TFYSwiftQuery.swift',
+    'ORM/TFYSwiftTableBuilder.swift',
+    'Reflection/TFYSwiftModelMirror.swift',
+    'Schema/TFYSwiftAutoTable.swift',
+    'Schema/TFYSwiftIndexBuilder.swift',
+    'Schema/TFYSwiftSchemaMigrator.swift',
+    'Utils/TFYSwiftBenchmark.swift',
+    'Utils/TFYSwiftTypeMapper.swift'
+  ]
+  library_resources = [
+    'PrivacyInfo.xcprivacy'
   ]
 
+  # Keep CocoaPods aligned file-for-file with the SwiftPM target.
+  s.source_files = library_sources.map { |path| "#{kit}/#{path}" }
+
   s.resource_bundles = {
-    'TFYSwiftSQLiteKit_Privacy' => ["#{kit}/PrivacyInfo.xcprivacy"]
+    'TFYSwiftSQLiteKit_Privacy' => library_resources.map { |path| "#{kit}/#{path}" }
   }
 end

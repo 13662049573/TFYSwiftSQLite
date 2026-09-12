@@ -13,6 +13,7 @@ final class TFYSwiftSQLiteKitTests: XCTestCase {
         try TFYSwiftDatabaseCenter.shared.removeDatabase(named: "binding_validation")
         try TFYSwiftDatabaseCenter.shared.removeDatabase(named: "logger_privacy")
         try TFYSwiftDatabaseCenter.shared.removeDatabase(named: "edge_cases")
+        try TFYSwiftDatabaseCenter.shared.removeDatabase(named: "migration_guard")
         TFYSwiftDBRuntime.setSQLLogger(nil)
     }
 
@@ -32,6 +33,10 @@ final class TFYSwiftSQLiteKitTests: XCTestCase {
         let createSQL = TFYSwiftTableBuilder.createTableSQL(for: schema)
         XCTAssertTrue(createSQL.contains(#""id" INTEGER PRIMARY KEY AUTOINCREMENT"#))
         XCTAssertTrue(createSQL.contains(#""nickname" TEXT DEFAULT 'guest'"#))
+        XCTAssertTrue(createSQL.contains(#""email" TEXT NOT NULL"#))
+
+        assertSendable(User.ageField)
+        assertSendable(User.query().where(User.ageField >= 18))
 
         let indexes = TFYSwiftIndexBuilder.expectedIndexes(for: schema)
         XCTAssertTrue(indexes.contains(where: { $0.name == "idx_user_username" }))
@@ -394,6 +399,124 @@ final class TFYSwiftSQLiteKitTests: XCTestCase {
         XCTAssertThrowsError(try TFYSwiftTypeMapper.userBindValue(for: UInt64.max))
         XCTAssertEqual(try TFYSwiftTypeMapper.userBindValue(for: UInt8.max), .integer(255))
         XCTAssertEqual(try TFYSwiftTypeMapper.userBindValue(for: Float(1.5)), .double(1.5))
+        XCTAssertThrowsError(try TFYSwiftTypeMapper.userBindValue(for: Double.infinity))
+        XCTAssertThrowsError(try TFYSwiftTypeMapper.userBindValue(for: Float.nan))
+        XCTAssertEqual(TFYSwiftTypeMapper.numericValue(from: .double(.infinity)), 0)
+        XCTAssertEqual(TFYSwiftTypeMapper.numericValue(from: .double(.greatestFiniteMagnitude)), .max)
+    }
+
+    func testSchemaEnforcesSwiftNullability() throws {
+        _ = try QueryEdge.createTable()
+        let connection = try TFYSwiftDatabaseCenter.shared.open(named: QueryEdge.databaseName)
+        let columns = try connection.pragmaTableInfo(tableName: QueryEdge.tableName)
+
+        XCTAssertEqual(columns.first(where: { $0.name == "value" })?.isNotNull, false)
+        XCTAssertEqual(columns.first(where: { $0.name == "label" })?.isNotNull, true)
+    }
+
+    func testSafeMigrationRejectsRequiredColumnWithoutValueSource() throws {
+        _ = try MigrationGuardV1.createTable()
+        try MigrationGuardV1(id: 0, name: "preserved").insert()
+
+        XCTAssertThrowsError(try MigrationGuardV2.createTable()) { error in
+            guard case let TFYSwiftDBError.migrationConflict(message) = error else {
+                return XCTFail("Expected migrationConflict error, got \(error)")
+            }
+            XCTAssertTrue(message.contains("requiredCode"))
+            XCTAssertTrue(message.contains("@TFYDefault"))
+        }
+
+        let connection = try TFYSwiftDatabaseCenter.shared.open(named: MigrationGuardV1.databaseName)
+        let columns = try connection.pragmaTableInfo(tableName: MigrationGuardV1.tableName)
+        XCTAssertFalse(columns.contains(where: { $0.name == "requiredCode" }))
+        XCTAssertEqual(try MigrationGuardV1.fetchAll().map(\.name), ["preserved"])
+    }
+
+    func testPreparedQueryMetricsScalarAndCloseLifecycle() throws {
+        let connection = try TFYSwiftDBConnection(path: ":memory:", databaseName: "memory")
+        try connection.execute("CREATE TABLE sample (value INTEGER NOT NULL);")
+
+        XCTAssertThrowsError(
+            try connection.withTransaction {
+                try connection.close()
+            }
+        ) { error in
+            guard case TFYSwiftDBError.closeDatabase = error else {
+                return XCTFail("Expected closeDatabase error, got \(error)")
+            }
+        }
+        XCTAssertTrue(connection.isOpen)
+
+        var insert: TFYSwiftDBStatement? = try connection.prepare("INSERT INTO sample (value) VALUES (?);")
+        try connection.execute(insert!, bindings: [.integer(7)])
+        try connection.execute(insert!, bindings: [.integer(8)])
+        XCTAssertEqual(connection.changes, 1)
+        XCTAssertEqual(connection.totalChanges, 2)
+
+        var select: TFYSwiftDBStatement? = try connection.prepare("SELECT value FROM sample WHERE value > ? ORDER BY value;")
+        let rows = try connection.query(select!, bindings: [.integer(6)])
+        XCTAssertEqual(rows.compactMap { $0["value"] }, [.integer(7), .integer(8)])
+        XCTAssertEqual(try connection.scalar("SELECT 7 AS first, 8 AS second;"), .integer(7))
+
+        XCTAssertThrowsError(try connection.close()) { error in
+            guard case TFYSwiftDBError.closeDatabase = error else {
+                return XCTFail("Expected closeDatabase error, got \(error)")
+            }
+        }
+        XCTAssertTrue(connection.isOpen)
+
+        insert = nil
+        select = nil
+        try connection.close()
+        XCTAssertFalse(connection.isOpen)
+    }
+
+    func testDatabaseCenterKeepsConnectionCachedWhenCloseIsBusy() throws {
+        let center = TFYSwiftDatabaseCenter.shared
+        let connection = try center.open(named: "binding_validation")
+        var statement: TFYSwiftDBStatement? = try connection.prepare("SELECT 1;")
+        XCTAssertEqual(statement?.columnCount, 1)
+
+        XCTAssertFalse(center.close(named: "binding_validation"))
+        XCTAssertTrue(try center.open(named: "binding_validation") === connection)
+
+        statement = nil
+        XCTAssertTrue(center.close(named: "binding_validation"))
+        XCTAssertFalse(try center.open(named: "binding_validation") === connection)
+    }
+
+    func testConfigurationRejectsOutOfRangeValues() throws {
+        XCTAssertThrowsError(
+            try TFYSwiftDBConnection(
+                path: ":memory:",
+                databaseName: "memory",
+                configuration: TFYSwiftDBConfiguration(busyTimeout: .infinity)
+            )
+        )
+        XCTAssertThrowsError(
+            try TFYSwiftDBConnection(
+                path: ":memory:",
+                databaseName: "memory",
+                configuration: TFYSwiftDBConfiguration(walAutoCheckpoint: Int(Int32.max) + 1)
+            )
+        )
+    }
+
+    func testLimitWithoutOffsetClearsPreviousOffsetAndTransactionReturnsValue() throws {
+        _ = try QueryEdge.createTable()
+        try QueryEdge.insert([
+            QueryEdge(id: 0, value: "first", label: "a"),
+            QueryEdge(id: 0, value: "second", label: "b")
+        ])
+
+        let reused = QueryEdge.query()
+            .orderBy(QueryEdge.fields.id.ascending())
+            .limit(1, offset: 1)
+            .limit(1)
+        XCTAssertEqual(try QueryEdge.fetchAll(reused).first?.value, "first")
+
+        let result = try QueryEdge.transaction { 42 }
+        XCTAssertEqual(result, 42)
     }
 
     func testRenameMigrationCopiesOriginalColumn() throws {
@@ -404,6 +527,8 @@ final class TFYSwiftSQLiteKitTests: XCTestCase {
         XCTAssertEqual(try Renamed.fetchAll().first?.newValue, "preserved")
     }
 }
+
+private func assertSendable<Value: Sendable>(_: Value) {}
 
 private enum IntentionalRollback: Error {
     case test
@@ -514,4 +639,19 @@ private struct Renamed: TFYSwiftDBModel {
     static func renamedColumns(for schema: TFYSwiftModelSchema, existingColumns: [TFYSQLiteTableColumnInfo]) throws -> [String: String] {
         ["newValue": "oldValue"]
     }
+}
+
+private struct MigrationGuardV1: TFYSwiftDBModel {
+    @TFYPrimaryKey(autoIncrement: true) var id: Int = 0
+    var name: String = ""
+    static var tableName: String { "migration_guard" }
+    static var databaseName: String { "migration_guard" }
+}
+
+private struct MigrationGuardV2: TFYSwiftDBModel {
+    @TFYPrimaryKey(autoIncrement: true) var id: Int = 0
+    var name: String = ""
+    var requiredCode: String = ""
+    static var tableName: String { "migration_guard" }
+    static var databaseName: String { "migration_guard" }
 }

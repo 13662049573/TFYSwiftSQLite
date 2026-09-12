@@ -16,6 +16,31 @@ struct LegacyUser: TFYSwiftDBModel {
     static var databaseName: String { "demo_main" }
 }
 
+/// Minimal legacy table used to demonstrate a safe `ADD COLUMN` migration.
+struct LegacyProfile: TFYSwiftDBModel {
+    @TFYPrimaryKey(autoIncrement: true)
+    var id: Int = 0
+
+    var username: String = ""
+
+    static var tableName: String { "profile" }
+    static var databaseName: String { "demo_main" }
+}
+
+/// The new required column has a SQL default, so existing rows remain valid.
+struct Profile: TFYSwiftDBModel {
+    @TFYPrimaryKey(autoIncrement: true)
+    var id: Int = 0
+
+    var username: String = ""
+
+    @TFYDefault("guest")
+    var role: String = "guest"
+
+    static var tableName: String { "profile" }
+    static var databaseName: String { "demo_main" }
+}
+
 struct User: TFYSwiftDBModel {
     @TFYPrimaryKey(autoIncrement: true)
     var id: Int = 0
@@ -132,4 +157,17 @@ struct TypeSample: TFYSwiftDBModel {
 
     static let flagField = field("flag", as: Bool.self)
     static let scoreField = field("score", as: Double.self)
+}
+
+/// Optional scalar values make the NULL query examples explicit.
+struct OptionalNote: TFYSwiftDBModel {
+    @TFYPrimaryKey(autoIncrement: true)
+    var id: Int = 0
+
+    var title: String = ""
+    var note: String?
+
+    static var databaseName: String { "demo_main" }
+
+    static let noteField = field("note", as: String?.self)
 }

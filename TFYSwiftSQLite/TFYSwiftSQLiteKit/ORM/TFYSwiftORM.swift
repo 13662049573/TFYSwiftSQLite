@@ -160,7 +160,7 @@ public enum TFYSwiftORM {
         guard let value = try connection.scalar(sql, bindings: bindings) else {
             return 0
         }
-        return Int(TFYSwiftTypeMapper.numericValue(from: value))
+        return try checkedRowCount(value)
     }
 
     public static func count<Model: TFYSwiftDBModel>(_ modelType: Model.Type, _ query: TFYQuery<Model>) throws -> Int {
@@ -172,7 +172,7 @@ public enum TFYSwiftORM {
         guard let value = try connection.scalar(sql, bindings: rendered.bindings) else {
             return 0
         }
-        return Int(TFYSwiftTypeMapper.numericValue(from: value))
+        return try checkedRowCount(value)
     }
 
     public static func exists<Model: TFYSwiftDBModel>(
@@ -196,10 +196,13 @@ public enum TFYSwiftORM {
         return try connection.scalar(sql, bindings: rendered.bindings) != nil
     }
 
-    public static func transaction<Model: TFYSwiftDBModel>(_ modelType: Model.Type, _ block: () throws -> Void) throws {
+    public static func transaction<Model: TFYSwiftDBModel, Result>(
+        _ modelType: Model.Type,
+        _ block: () throws -> Result
+    ) throws -> Result {
         let schema = try TFYSwiftModelMirror.schema(for: modelType)
         let connection = try TFYSwiftDatabaseCenter.shared.open(named: schema.databaseName)
-        try connection.withTransaction(block)
+        return try connection.withTransaction(block)
     }
 
     private static func persist<Model: TFYSwiftDBModel>(
@@ -294,5 +297,13 @@ public enum TFYSwiftORM {
         let sql = "DELETE FROM \(TFYSwiftSQL.escapeIdentifier(schema.tableName))\(whereClause);"
         let connection = try TFYSwiftDatabaseCenter.shared.open(named: schema.databaseName)
         try connection.execute(sql, bindings: rendered.bindings)
+    }
+
+    private static func checkedRowCount(_ value: TFYSQLiteValue) throws -> Int {
+        let count = TFYSwiftTypeMapper.numericValue(from: value)
+        guard count >= 0, let result = Int(exactly: count) else {
+            throw TFYSwiftDBError.decoding("SQLite row count is outside Swift Int range: \(count).")
+        }
+        return result
     }
 }

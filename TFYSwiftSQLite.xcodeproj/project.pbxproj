@@ -45,6 +45,7 @@
 		8B38583E5CC28C5D2546CDEB /* BenchmarkModels.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BenchmarkModels.swift; path = TFYSwiftSQLiteBenchmarks/BenchmarkModels.swift; sourceTree = "<group>"; };
 		8EE75A3A4B66EBF7AB5D9909 /* TFYSwiftDBConnection.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TFYSwiftDBConnection.swift; path = TFYSwiftSQLite/TFYSwiftSQLiteKit/Core/TFYSwiftDBConnection.swift; sourceTree = "<group>"; };
 		93ABDC3DCB96F3F928A6FCC4 /* TFYSwiftSchemaMigrator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TFYSwiftSchemaMigrator.swift; path = TFYSwiftSQLite/TFYSwiftSQLiteKit/Schema/TFYSwiftSchemaMigrator.swift; sourceTree = "<group>"; };
+		9468F4B49C514D9DB2C10601 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = TFYSwiftSQLite/TFYSwiftSQLiteKit/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		949538A300E54BA9FB605A3A /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
 		9C79F0683A26612135BD6D43 /* TFYSwiftTypeMapper.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TFYSwiftTypeMapper.swift; path = TFYSwiftSQLite/TFYSwiftSQLiteKit/Utils/TFYSwiftTypeMapper.swift; sourceTree = "<group>"; };
 		A24D8F0CE8B6FD632B1B513E /* TFYSwiftDBModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TFYSwiftDBModel.swift; path = TFYSwiftSQLite/TFYSwiftSQLiteKit/ORM/TFYSwiftDBModel.swift; sourceTree = "<group>"; };
@@ -131,6 +132,7 @@
 				93ABDC3DCB96F3F928A6FCC4 /* TFYSwiftSchemaMigrator.swift */,
 				4C1E230220878FC8CB5C7C0C /* TFYSwiftBenchmark.swift */,
 				9C79F0683A26612135BD6D43 /* TFYSwiftTypeMapper.swift */,
+				9468F4B49C514D9DB2C10601 /* PrivacyInfo.xcprivacy */,
 			);
 			name = TFYSwiftSQLiteKitShared;
 			sourceTree = "<group>";
@@ -381,7 +383,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.6;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Daily.vest.bag.company.TFYSwiftSQLite.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
@@ -432,7 +434,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.6;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Daily.vest.bag.company.TFYSwiftSQLite.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -467,7 +469,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.6;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Daily.vest.bag.company.TFYSwiftSQLite;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -503,7 +505,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.6;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Daily.vest.bag.company.TFYSwiftSQLite;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;

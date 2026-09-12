@@ -42,6 +42,7 @@ public enum TFYSwiftSchemaMigrator {
         let existingColumns = try connection.pragmaTableInfo(tableName: schema.tableName)
         let existingColumnMap = Dictionary(uniqueKeysWithValues: existingColumns.map { ($0.name, $0) })
         var rebuildReasons: [String] = []
+        var columnsToAdd: [TFYSwiftColumn] = []
         let renamedColumns = schema.migrationPolicy == .rebuildTable
             ? try modelType.renamedColumns(for: schema, existingColumns: existingColumns)
             : [:]
@@ -61,9 +62,19 @@ public enum TFYSwiftSchemaMigrator {
                     rebuildReasons.append("Column \(column.name) is renamed from \(renamedColumns[column.name]!).")
                     continue
                 }
-                let sql = TFYSwiftTableBuilder.addColumnSQL(tableName: schema.tableName, column: column)
-                try connection.execute(sql)
-                report.addAddedColumnSQL(sql)
+                if column.isPrimaryKey {
+                    rebuildReasons.append("Primary key column \(column.name) cannot be added with ALTER TABLE.")
+                    continue
+                }
+
+                // A populated table cannot safely gain a required column without a
+                // value source. Under rebuildTable, defer it to the rebuild hooks;
+                // under safe, validate before attempting ALTER TABLE.
+                if !column.isOptional, column.defaultSQL == nil, schema.migrationPolicy == .rebuildTable {
+                    rebuildReasons.append("Required column \(column.name) needs values supplied during table rebuild.")
+                    continue
+                }
+                columnsToAdd.append(column)
                 continue
             }
 
@@ -74,9 +85,15 @@ public enum TFYSwiftSchemaMigrator {
             if existing.isPrimaryKey != column.isPrimaryKey {
                 rebuildReasons.append("Column \(column.name) primary key flag differs.")
             }
+            let expectsNotNull = !column.isOptional
+            if existing.isNotNull != expectsNotNull {
+                rebuildReasons.append(
+                    "Column \(column.name) nullability differs: existing \(existing.isNotNull ? "NOT NULL" : "NULL"), expected \(column.isOptional ? "NULL" : "NOT NULL")."
+                )
+            }
             let existingDefault = existing.defaultValueSQL?.trimmingCharacters(in: .whitespacesAndNewlines)
             let expectedDefault = column.defaultSQL?.trimmingCharacters(in: .whitespacesAndNewlines)
-            if existingDefault != expectedDefault, expectedDefault != nil {
+            if existingDefault != expectedDefault {
                 rebuildReasons.append("Column \(column.name) default differs: existing \(existingDefault ?? "nil"), expected \(expectedDefault ?? "nil").")
             }
         }
@@ -87,21 +104,39 @@ public enum TFYSwiftSchemaMigrator {
             rebuildReasons.append("Columns removed from model: \(removedColumns.joined(separator: ", ")).")
         }
 
-        if !rebuildReasons.isEmpty {
-            switch schema.migrationPolicy {
-            case .safe:
-                for reason in rebuildReasons {
-                    report.addWarning("\(reason) Safe migration leaves table as-is.")
-                }
-            case .rebuildTable:
-                try rebuildTable(
-                    modelType,
-                    schema: schema,
-                    existingColumns: existingColumns,
-                    connection: connection,
-                    report: &report,
-                    reasons: rebuildReasons
+        // Decide whether to rebuild before applying incremental changes so the
+        // source schema snapshot and copy plan cannot become stale mid-migration.
+        if !rebuildReasons.isEmpty, schema.migrationPolicy == .rebuildTable {
+            try rebuildTable(
+                modelType,
+                schema: schema,
+                existingColumns: existingColumns,
+                connection: connection,
+                report: &report,
+                reasons: rebuildReasons
+            )
+        } else {
+            if columnsToAdd.contains(where: { !$0.isOptional && $0.defaultSQL == nil }),
+               try connection.scalar(
+                   "SELECT 1 FROM \(TFYSwiftSQL.escapeIdentifier(schema.tableName)) LIMIT 1;"
+               ) != nil {
+                let names = columnsToAdd
+                    .filter { !$0.isOptional && $0.defaultSQL == nil }
+                    .map(\.name)
+                    .joined(separator: ", ")
+                throw TFYSwiftDBError.migrationConflict(
+                    "Cannot safely add required columns without defaults to non-empty table '\(schema.tableName)': \(names). Add @TFYDefault or use rebuildTable with rename/custom expressions."
                 )
+            }
+
+            for column in columnsToAdd {
+                let sql = TFYSwiftTableBuilder.addColumnSQL(tableName: schema.tableName, column: column)
+                try connection.execute(sql)
+                report.addAddedColumnSQL(sql)
+            }
+
+            for reason in rebuildReasons {
+                report.addWarning("\(reason) Safe migration leaves table as-is.")
             }
         }
 

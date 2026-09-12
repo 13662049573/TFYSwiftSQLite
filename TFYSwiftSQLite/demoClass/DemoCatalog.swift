@@ -14,15 +14,47 @@ enum DemoSection: Int, CaseIterable {
 
     var title: String {
         switch self {
-        case .connection: return "1. 连接与配置"
-        case .schema: return "2. 模型与建表"
-        case .crud: return "3. CRUD"
-        case .query: return "4. 类型安全查询"
-        case .types: return "5. JSON / 类型映射"
-        case .transaction: return "6. 事务"
-        case .migration: return "7. 迁移"
-        case .lowLevel: return "8. 底层 API"
-        case .benchmark: return "9. 性能与日志"
+        case .connection: return "连接与配置"
+        case .schema: return "模型与建表"
+        case .crud: return "CRUD"
+        case .query: return "类型安全查询"
+        case .types: return "JSON 与类型映射"
+        case .transaction: return "事务与一致性"
+        case .migration: return "安全迁移"
+        case .lowLevel: return "底层 API"
+        case .benchmark: return "性能与诊断"
+        }
+    }
+
+    var numberedTitle: String {
+        String(format: "%02d  %@", rawValue + 1, title)
+    }
+
+    var summary: String {
+        switch self {
+        case .connection: return "数据库中心、路径、WAL 配置、关闭与日志。"
+        case .schema: return "属性包装器、主键、索引、唯一约束与建表 SQL。"
+        case .crud: return "插入、批量写入、更新、删除、统计与分页。"
+        case .query: return "强类型字段、动态字段、组合谓词与 NULL 查询。"
+        case .types: return "JSON、Bool、Date、Data、Double 与忽略字段。"
+        case .transaction: return "提交、返回值、回滚以及嵌套 Savepoint。"
+        case .migration: return "安全升级拒绝、默认值升级、重建与迁移日志。"
+        case .lowLevel: return "原始 SQL、预编译语句、指标、元数据与错误。"
+        case .benchmark: return "读写基准与完整 Demo 自检。"
+        }
+    }
+
+    var symbolName: String {
+        switch self {
+        case .connection: return "externaldrive.fill"
+        case .schema: return "tablecells"
+        case .crud: return "square.and.pencil"
+        case .query: return "line.3.horizontal.decrease.circle"
+        case .types: return "shippingbox"
+        case .transaction: return "arrow.triangle.2.circlepath"
+        case .migration: return "arrow.up.doc"
+        case .lowLevel: return "terminal"
+        case .benchmark: return "speedometer"
         }
     }
 }
@@ -31,7 +63,24 @@ struct DemoItem {
     let section: DemoSection
     let title: String
     let subtitle: String
+    let isAggregate: Bool
     let run: () throws -> String
+
+    var identifier: String { "\(section.rawValue).\(title)" }
+
+    init(
+        section: DemoSection,
+        title: String,
+        subtitle: String,
+        isAggregate: Bool = false,
+        run: @escaping () throws -> String
+    ) {
+        self.section = section
+        self.title = title
+        self.subtitle = subtitle
+        self.isAggregate = isAggregate
+        self.run = run
+    }
 }
 
 enum DemoCatalog {
@@ -240,13 +289,20 @@ enum DemoCatalog {
                 "NOT starts a: \(try User.fetchAll(notQ).map(\.username))"
             ])
         },
-        DemoItem(section: .query, title: "contains / isNull / isNotNull", subtitle: "字符串与空值") {
+        DemoItem(section: .query, title: "contains / isNull / isNotNull", subtitle: "字符串匹配与可选值") {
             try seedQueryUsers()
+            _ = try OptionalNote.createTable()
+            try OptionalNote.insert([
+                OptionalNote(id: 0, title: "empty", note: nil),
+                OptionalNote(id: 0, title: "filled", note: "SQLite note")
+            ])
             let contains = User.query().where(User.usernameField.contains("ru"))
-            let notNull = User.query().where(User.emailField.isNotNull())
+            let isNull = OptionalNote.query().where(OptionalNote.noteField.isNull())
+            let isNotNull = OptionalNote.query().where(OptionalNote.noteField.isNotNull())
             return ok([
                 "contains ru: \(try User.fetchAll(contains).map(\.username))",
-                "email not null count: \(try User.count(notNull))"
+                "note IS NULL: \(try OptionalNote.count(isNull))",
+                "note IS NOT NULL: \(try OptionalNote.count(isNotNull))"
             ])
         },
         DemoItem(section: .query, title: "非法字段延迟报错", subtitle: "fields.noSuchColumn") {
@@ -318,6 +374,18 @@ enum DemoCatalog {
             }
             return ok(["count: \(try User.count())"])
         },
+        DemoItem(section: .transaction, title: "返回值事务", subtitle: "transaction<T> 提交并返回结果") {
+            try prepareUsers()
+            let insertedNames = try User.transaction {
+                let users = [
+                    makeUser(username: "value1", email: "value1@demo.com"),
+                    makeUser(username: "value2", email: "value2@demo.com")
+                ]
+                try User.insert(users)
+                return try User.fetchAll().map(\.username)
+            }
+            return ok(["returned: \(insertedNames)"])
+        },
         DemoItem(section: .transaction, title: "抛错回滚", subtitle: "事务失败数据不残留") {
             try prepareUsers()
             try makeUser(username: "keep", email: "keep@demo.com").insert()
@@ -357,22 +425,39 @@ enum DemoCatalog {
         },
 
         // MARK: Migration
-        DemoItem(section: .migration, title: "Legacy → ADD COLUMN", subtitle: "safe 升级") {
+        DemoItem(section: .migration, title: "拒绝不安全必填列", subtitle: "已有数据 + 无默认值 → migrationConflict") {
             try reset()
-            let legacy = try LegacyUser.createTable()
+            _ = try LegacyUser.createTable()
             try LegacyUser(id: 0, username: "legacy_user").insert()
-            let upgrade = try User.createTable()
-            let second = try User.createTable()
-            let conn = try TFYSwiftDatabaseCenter.shared.open(named: "demo_main")
-            let raw = try conn.query("SELECT id, username, email, age FROM \"user\";")
-            // New non-optional columns are NULL on legacy rows — fetch via typed ORM only where email IS NOT NULL.
-            try makeUser(username: "fresh", email: "fresh@demo.com", age: 26).insert()
-            let typed = try User.fetchAll(where: "\"email\" IS NOT NULL")
+            do {
+                _ = try User.createTable()
+                throw DemoAssertError("unsafe migration should have been rejected")
+            } catch is DemoAssertError {
+                throw DemoAssertError("unsafe migration should have been rejected")
+            } catch {
+                let columns = try TFYSwiftDatabaseCenter.shared
+                    .open(named: "demo_main")
+                    .pragmaTableInfo(tableName: "user")
+                return ok([
+                    "blocked: \(error)",
+                    "original columns preserved: \(columns.map(\.name))"
+                ])
+            }
+        },
+        DemoItem(section: .migration, title: "默认值安全升级", subtitle: "@TFYDefault 支持已有数据 ADD COLUMN") {
+            try reset()
+            let legacy = try LegacyProfile.createTable()
+            try LegacyProfile(id: 0, username: "legacy_profile").insert()
+            let upgrade = try Profile.createTable()
+            let second = try Profile.createTable()
+            guard let row = try Profile.fetchAll().first, row.role == "guest" else {
+                throw DemoAssertError("default value migration failed")
+            }
             return ok(
                 ["legacy:"] + legacy.formattedLines()
                 + ["upgrade:"] + upgrade.formattedLines()
                 + ["idempotent:"] + second.formattedLines()
-                + ["raw after ADD COLUMN: \(raw)", "typed (email NOT NULL): \(typed)"]
+                + ["row: \(row)"]
             )
         },
         DemoItem(section: .migration, title: "rebuildTable 迁移", subtitle: "rename + expression + validate") {
@@ -429,6 +514,53 @@ enum DemoCatalog {
                 )
             }
             return ok(["count: \(try User.count())", "lastRowID: \(conn.lastInsertedRowID)"])
+        },
+        DemoItem(section: .lowLevel, title: "Prepared Query 与列读取", subtitle: "query(statement) · value(at:)") {
+            try seedQueryUsers()
+            let conn = try TFYSwiftDatabaseCenter.shared.open(named: "demo_main")
+            let query = try conn.prepare("SELECT username, age FROM \"user\" WHERE age >= ? ORDER BY age DESC;")
+            let rows = try conn.query(query, bindings: [.integer(20)])
+
+            let cursor = try conn.prepare("SELECT username, age FROM \"user\" ORDER BY id LIMIT 1;")
+            guard try cursor.step() else {
+                throw DemoAssertError("prepared cursor returned no row")
+            }
+            return ok([
+                "query rows: \(rows)",
+                "columnCount: \(cursor.columnCount)",
+                "first values: \(String(describing: cursor.value(at: 0))), \(String(describing: cursor.value(at: 1)))"
+            ])
+        },
+        DemoItem(section: .lowLevel, title: "变更计数指标", subtitle: "changes · totalChanges · lastInsertedRowID") {
+            try prepareUsers()
+            let conn = try TFYSwiftDatabaseCenter.shared.open(named: "demo_main")
+            try User.insert([
+                makeUser(username: "metric1", email: "metric1@demo.com"),
+                makeUser(username: "metric2", email: "metric2@demo.com")
+            ])
+            try conn.execute("UPDATE \"user\" SET age = age + 1;")
+            return ok([
+                "last statement changes: \(conn.changes)",
+                "connection total changes: \(conn.totalChanges)",
+                "last inserted row id: \(conn.lastInsertedRowID)"
+            ])
+        },
+        DemoItem(section: .lowLevel, title: "安全关闭生命周期", subtitle: "存活 Statement 会阻止 close/remove") {
+            try prepareUsers()
+            let center = TFYSwiftDatabaseCenter.shared
+            let conn = try center.open(named: "demo_main")
+            var statement: TFYSwiftDBStatement? = try conn.prepare("SELECT 1;")
+            let blocked = center.close(named: "demo_main") == false
+            statement = nil
+            let closed = center.close(named: "demo_main")
+            guard blocked && closed else {
+                throw DemoAssertError("close lifecycle mismatch: blocked=\(blocked), closed=\(closed)")
+            }
+            return ok([
+                "close while statement alive: blocked",
+                "close after statement release: \(closed)",
+                "statement released: \(statement == nil)"
+            ])
         },
         DemoItem(section: .lowLevel, title: "Introspection", subtitle: "tableExists / pragmaTableInfo / indexList") {
             try prepareUsers()
@@ -499,8 +631,13 @@ enum DemoCatalog {
                 "ops/s: \(Int(report.operationsPerSecond))"
             ])
         },
-        DemoItem(section: .benchmark, title: "Run All Demos", subtitle: "全量自检（含本项外全部）") {
-            try runAll(excludingTitles: ["Run All Demos"])
+        DemoItem(
+            section: .benchmark,
+            title: "运行全部示例",
+            subtitle: "逐项执行并汇总通过/失败数量",
+            isAggregate: true
+        ) {
+            try runAll()
         }
     ]
 
@@ -508,22 +645,30 @@ enum DemoCatalog {
         items.filter { $0.section == section }
     }
 
-    static func runAll(excludingTitles: Set<String> = []) throws -> String {
-        var lines: [String] = ["=== TFYSwiftSQLiteKit Full Demo ==="]
+    static var runnableItemCount: Int {
+        items.filter { !$0.isAggregate }.count
+    }
+
+    static func resetDatabases() throws {
+        try reset()
+    }
+
+    static func runAll() throws -> String {
+        var lines: [String] = ["=== TFYSwiftSQLiteKit 1.0.6 Full Demo ==="]
         var passed = 0
         var failed = 0
         let started = CFAbsoluteTimeGetCurrent()
 
-        for item in items where !excludingTitles.contains(item.title) {
+        for item in items where !item.isAggregate {
             do {
                 let output = try item.run()
                 passed += 1
-                lines.append("✅ [\(item.section.title)] \(item.title)")
+                lines.append("✅ [\(item.section.numberedTitle)] \(item.title)")
                 lines.append(output)
                 lines.append("")
             } catch {
                 failed += 1
-                lines.append("❌ [\(item.section.title)] \(item.title)")
+                lines.append("❌ [\(item.section.numberedTitle)] \(item.title)")
                 lines.append("ERROR: \(error)")
                 lines.append("")
             }
@@ -558,7 +703,7 @@ private func reset() throws {
     let center = TFYSwiftDatabaseCenter.shared
     center.closeAll()
     for name in DemoCatalog.databaseNames {
-        try? center.removeDatabase(named: name)
+        try center.removeDatabase(named: name)
     }
 }
 

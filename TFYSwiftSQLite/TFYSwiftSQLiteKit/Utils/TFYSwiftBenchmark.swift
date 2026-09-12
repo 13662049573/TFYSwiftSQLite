@@ -1,6 +1,6 @@
 import Foundation
 
-public struct TFYSwiftBenchmarkReport {
+public struct TFYSwiftBenchmarkReport: Sendable {
     public let name: String
     public let iterations: Int
     public let batchSize: Int
@@ -17,7 +17,7 @@ public struct TFYSwiftBenchmarkReport {
         self.iterations = iterations
         self.batchSize = batchSize
         self.elapsed = elapsed
-        let operations = Double(iterations * max(batchSize, 1))
+        let operations = Double(max(iterations, 0)) * Double(max(batchSize, 1))
         self.operationsPerSecond = elapsed > 0 ? operations / elapsed : operations
     }
 }
@@ -53,6 +53,9 @@ public enum TFYSwiftBenchmark {
         }
         guard batchSize > 0 else {
             throw TFYSwiftDBError.invalidQuery("Benchmark batchSize must be greater than zero.")
+        }
+        guard iterations <= Int.max / batchSize else {
+            throw TFYSwiftDBError.invalidQuery("Benchmark iterations multiplied by batchSize exceeds the supported integer range.")
         }
 
         return try measure(name: name, iterations: iterations, batchSize: batchSize) { iteration in

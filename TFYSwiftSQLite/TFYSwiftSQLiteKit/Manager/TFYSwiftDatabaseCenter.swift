@@ -5,6 +5,7 @@ public final class TFYSwiftDatabaseCenter: @unchecked Sendable {
 
     private var connections: [String: TFYSwiftDBConnection] = [:]
     private var databasesBeingRemoved: Set<String> = []
+    private var databasesBeingClosed: Set<String> = []
     private let lock = NSLock()
 
     private init() {}
@@ -16,9 +17,10 @@ public final class TFYSwiftDatabaseCenter: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
 
-        guard !databasesBeingRemoved.contains(databaseName) else {
+        guard !databasesBeingRemoved.contains(databaseName),
+              !databasesBeingClosed.contains(databaseName) else {
             throw TFYSwiftDBError.invalidConfiguration(
-                "Database '\(databaseName)' is currently being removed. Retry after the removal completes."
+                "Database '\(databaseName)' is currently being closed or removed. Retry after the operation completes."
             )
         }
 
@@ -47,12 +49,13 @@ public final class TFYSwiftDatabaseCenter: @unchecked Sendable {
 
     public func removeDatabase(named databaseName: String) throws {
         lock.lock()
-        guard !databasesBeingRemoved.contains(databaseName) else {
+        guard !databasesBeingRemoved.contains(databaseName),
+              !databasesBeingClosed.contains(databaseName) else {
             lock.unlock()
-            throw TFYSwiftDBError.invalidConfiguration("Database '\(databaseName)' is already being removed.")
+            throw TFYSwiftDBError.invalidConfiguration("Database '\(databaseName)' is already being closed or removed.")
         }
         databasesBeingRemoved.insert(databaseName)
-        let connection = connections.removeValue(forKey: databaseName)
+        let connection = connections[databaseName]
         lock.unlock()
 
         defer {
@@ -62,6 +65,12 @@ public final class TFYSwiftDatabaseCenter: @unchecked Sendable {
         }
 
         try connection?.close()
+        lock.lock()
+        if connections[databaseName] === connection {
+            connections.removeValue(forKey: databaseName)
+        }
+        lock.unlock()
+
         let path = try Self.databasePath(named: databaseName)
         let fileManager = FileManager.default
         let sidecars = [path, "\(path)-wal", "\(path)-shm"]
@@ -72,17 +81,60 @@ public final class TFYSwiftDatabaseCenter: @unchecked Sendable {
 
     public func closeAll() {
         lock.lock()
-        let openConnections = Array(connections.values)
-        connections.removeAll()
+        let openConnections = connections.filter {
+            !databasesBeingRemoved.contains($0.key) && !databasesBeingClosed.contains($0.key)
+        }
+        databasesBeingClosed.formUnion(openConnections.keys)
         lock.unlock()
-        openConnections.forEach { try? $0.close() }
+
+        for (databaseName, connection) in openConnections {
+            let didClose: Bool
+            do {
+                try connection.close()
+                didClose = true
+            } catch {
+                didClose = false
+            }
+
+            lock.lock()
+            if didClose, connections[databaseName] === connection {
+                connections.removeValue(forKey: databaseName)
+            }
+            databasesBeingClosed.remove(databaseName)
+            lock.unlock()
+        }
     }
 
-    public func close(named databaseName: String) {
+    @discardableResult
+    public func close(named databaseName: String) -> Bool {
         lock.lock()
-        let connection = connections.removeValue(forKey: databaseName)
+        guard !databasesBeingRemoved.contains(databaseName),
+              !databasesBeingClosed.contains(databaseName) else {
+            lock.unlock()
+            return false
+        }
+        guard let connection = connections[databaseName] else {
+            lock.unlock()
+            return true
+        }
+        databasesBeingClosed.insert(databaseName)
         lock.unlock()
-        try? connection?.close()
+
+        let didClose: Bool
+        do {
+            try connection.close()
+            didClose = true
+        } catch {
+            didClose = false
+        }
+
+        lock.lock()
+        if didClose, connections[databaseName] === connection {
+            connections.removeValue(forKey: databaseName)
+        }
+        databasesBeingClosed.remove(databaseName)
+        lock.unlock()
+        return didClose
     }
 
     public static func databasePath(named databaseName: String) throws -> String {

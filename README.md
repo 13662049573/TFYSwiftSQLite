@@ -4,7 +4,7 @@
 
 示例应用与单元测试位于本仓库的 Xcode 工程 `TFYSwiftSQLite.xcodeproj`（目标 `TFYSwiftSQLite` / `TFYSwiftSQLiteTests`）。独立集成库时请使用下方 **Swift Package Manager** 或 **CocoaPods**。
 
-**当前版本：`1.0.5`**
+**当前版本：`1.0.6`**
 
 ## 功能概览
 
@@ -13,13 +13,26 @@
 | **Annotation** | `@TFYColumn`、`@TFYPrimaryKey`、`@TFYIndex`、`@TFYUnique`、`@TFYDefault`、`@TFYIgnore` 等 |
 | **ORM** | `TFYSwiftDBModel`、`TFYSwiftORM`（insert / update / delete / fetch）、类型安全 `TFYQuery` |
 | **Schema** | `TFYSwiftAutoTable`、`TFYSwiftSchemaMigrator`、复合索引 `TFYCompositeIndex`、`TFYMigrationPolicy` |
-| **Core** | `TFYSwiftDBConnection`（连接级线程安全、嵌套事务、WAL、busy timeout）、`TFYSwiftDBStatement`、`TFYSwiftDBError` |
+| **Core** | `TFYSwiftDBConnection`（连接级线程安全、嵌套事务、WAL、busy timeout、预编译查询与变更计数）、`TFYSwiftDBStatement`、`TFYSwiftDBError` |
 | **Manager** | `TFYSwiftDatabaseCenter` 单例：按库名缓存连接、路径解析、删除库文件 |
 | **Utils** | `TFYSwiftTypeMapper`（含 `Date` / `Data` / `Bool` 往返）、`TFYSwiftBenchmark` |
 
 面向生产环境的默认策略包括：同一连接上的 SQL 与事务串行化、5 秒锁等待、WAL 自动 checkpoint、外键开启、迁移整体事务化、SQL 日志绑定值默认脱敏，以及批量写入复用 prepared statement。
 
 库不采集数据、不联网，随 SPM 与 CocoaPods 分发 Privacy Manifest。
+
+## Demo 应用
+
+打开 `TFYSwiftSQLite.xcodeproj` 并运行 `TFYSwiftSQLite` scheme，即可使用可搜索的交互式示例目录。Demo 当前包含 9 个主题、39 个可独立运行的示例：
+
+- 数据库连接、WAL 配置、路径管理、关闭生命周期与脱敏 SQL 日志
+- 属性包装器建表、单列/复合索引、CRUD、分页和强类型查询
+- JSON、可选值、Bool、Date、Data、Double 等类型往返
+- 返回值事务、失败回滚、嵌套 Savepoint
+- 不安全必填列迁移拒绝、默认值安全升级、重建迁移与迁移日志
+- 原始 SQL、预编译执行/查询、列读取、变更计数和读写 Benchmark
+
+点击任一条目会执行真实 SQLite 操作并显示成功状态、耗时及完整输出；结果支持重新运行和复制。“全部运行”会顺序执行 39 个示例并汇总失败项，“重置”仅删除 Demo 自己创建的数据库。
 
 ## 集成
 
@@ -30,7 +43,7 @@
 或在其它 Package 中依赖：
 
 ```swift
-.package(url: "https://github.com/13662049573/TFYSwiftSQLite.git", from: "1.0.5"),
+.package(url: "https://github.com/13662049573/TFYSwiftSQLite.git", from: "1.0.6"),
 ```
 
 ```swift
@@ -43,10 +56,10 @@
 ### CocoaPods
 
 ```ruby
-pod 'TFYSwiftSQLiteKit', '~> 1.0.5'
+pod 'TFYSwiftSQLiteKit', '~> 1.0.6'
 ```
 
-`TFYSwiftSQLiteKit` 的 pod 会按库当前目录结构收录以下源码目录，并自动链接 `sqlite3`：
+`TFYSwiftSQLiteKit` 的 Podspec 会逐文件显式收录库根目录下的全部 Swift 源码，并自动链接 `sqlite3`。当前源码目录为：
 
 - `Annotation`
 - `Core`
@@ -56,9 +69,9 @@ pod 'TFYSwiftSQLiteKit', '~> 1.0.5'
 - `Schema`
 - `Utils`
 
-当前 CocoaPods 形态仍然是一个完整 runtime pod；由于库内部存在跨目录引用，`podspec` 里保留了按文件夹维护的源码清单，并在注释中标明内部依赖关系，方便后续继续拆边界。
+当前 CocoaPods 形态仍然是一个完整 runtime pod；由于库内部存在跨目录引用，Podspec 与 Package 均逐文件声明源码和资源。发布前的一致性脚本会进行双向逐项检查，新增、遗漏或多余文件都会使验证失败，避免三处配置发生漂移。
 
-版本号与 `TFYSwiftSQLiteKit.podspec` 中 `s.version` 保持一致；发版时请打对应 git tag（例如 `1.0.5`）。
+版本号与 `TFYSwiftSQLiteKit.podspec` 中 `s.version` 保持一致；Swift Package Manager 使用同名 git tag 解析版本（例如 `1.0.6`）。Podspec 与 Package 均从 `TFYSwiftSQLite/TFYSwiftSQLiteKit` 收录完整源码，并打包同一份 `PrivacyInfo.xcprivacy`。
 
 ## 快速上手
 
@@ -152,7 +165,7 @@ let connection = try TFYSwiftDatabaseCenter.shared.open(
 )
 ```
 
-同名数据库已打开后不能切换配置；请先调用 `close(named:)`，再使用新配置打开。
+同名数据库已打开后不能切换配置；请先调用 `close(named:)`，再使用新配置打开。该方法返回是否真正关闭；若仍有存活的预编译语句，它会返回 `false` 并保留原连接，避免出现“表面关闭、实际仍占用文件”的状态。
 
 ### 6. SQL 观测与隐私
 
@@ -192,7 +205,7 @@ static func renamedColumns(
 }
 ```
 
-新增的必填列必须有 `@TFYDefault`、重命名来源或 `rebuildExpressions`；否则迁移会回滚并报告冲突，避免静默写入 NULL。生产升级前仍应备份数据库并在真实数据副本上演练迁移。
+Swift 非可选属性会生成 `NOT NULL` 约束。向已有数据的表新增必填列时，必须有 `@TFYDefault`、重命名来源或 `rebuildExpressions`；否则迁移会回滚并报告冲突，避免静默写入 NULL。生产升级前仍应备份数据库并在真实数据副本上演练迁移。
 
 ### 9. 错误处理与原始 SQL
 
@@ -229,6 +242,13 @@ TFYSwiftSQLite/TFYSwiftSQLiteKit/
 
 ## 版本历史
 
+### 1.0.6
+
+- 非可选模型属性生成 `NOT NULL`，并阻止已有数据表静默新增无默认值的必填列
+- 增加预编译查询、列读取、连接变更计数与可返回值事务，修复分页 offset 残留
+- 强化连接关闭生命周期、数值边界、Benchmark 溢出保护与 Swift 6 严格并发兼容
+- 统一 Xcode、CocoaPods 与 SwiftPM 的源码、Privacy Manifest、平台下限和版本说明
+
 ### 1.0.5
 
 - 修复 `Date` / `Data` ORM 解码：识别 `Foundation.Date` / `Foundation.Data`，并用 `timeIntervalSinceReferenceDate` 策略解码
@@ -252,12 +272,14 @@ TFYSwiftSQLite/TFYSwiftSQLiteKit/
 发版检查清单：
 
 ```bash
-# 1. 确认 podspec / README 版本一致
-# 2. 跑测试
+# 1. 确认 Xcode / CocoaPods / SwiftPM 的源码、资源和版本一致
+ruby Scripts/validate_distribution_layout.rb
+# 2. 跑测试与发布构建
 swift test
+swift build -c release
 # 3. 提交后打 tag 并推送
-git tag 1.0.5
-git push origin 1.0.5
+git tag 1.0.6
+git push origin 1.0.6
 # 4. （可选）推 CocoaPods trunk
 pod trunk push TFYSwiftSQLiteKit.podspec
 ```
@@ -271,13 +293,15 @@ swift test
 swift build -c release
 ```
 
-当前测试覆盖 CRUD、批量写入、分页与计数、唯一索引、多数据库隔离、迁移与重建、日志脱敏、绑定参数校验、NULL/LIKE 边界、整数溢出，以及并发事务隔离。
+当前测试覆盖 CRUD、批量写入、分页与计数、唯一索引、多数据库隔离、迁移与重建、必填列保护、预编译查询、连接关闭生命周期、日志脱敏、绑定参数校验、NULL/LIKE 边界、数值溢出，以及并发事务隔离。
 
 ## 系统要求
 
 - Swift 5.9+
 - iOS 15+
-- macOS 15+（CocoaPods）；SPM `Package.swift` 平台下限见仓库声明
+- macOS 13+
+- tvOS 13+
+- watchOS 6+
 - 示例 Xcode 工程内应用目标的 **IPHONEOS_DEPLOYMENT_TARGET** 可能与上述不同，以工程设置为准
 
 ## 许可

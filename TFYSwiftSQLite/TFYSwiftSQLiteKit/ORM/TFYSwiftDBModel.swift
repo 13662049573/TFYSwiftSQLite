@@ -117,7 +117,7 @@ public extension TFYSwiftDBModel {
         try TFYSwiftORM.exists(Self.self, query)
     }
 
-    static func transaction(_ block: () throws -> Void) throws {
+    static func transaction<Result>(_ block: () throws -> Result) throws -> Result {
         try TFYSwiftORM.transaction(Self.self, block)
     }
 

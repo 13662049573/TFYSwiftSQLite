@@ -1,16 +1,16 @@
 import Foundation
 
-public enum TFYStorageStrategy: String, Codable {
+public enum TFYStorageStrategy: String, Codable, Sendable {
     case scalar
     case json
 }
 
-public enum TFYMigrationPolicy: String, Codable {
+public enum TFYMigrationPolicy: String, Codable, Sendable {
     case safe
     case rebuildTable
 }
 
-public struct TFYCompositeIndex: Equatable, Codable {
+public struct TFYCompositeIndex: Equatable, Codable, Sendable {
     public let columns: [String]
     public let unique: Bool
     public let name: String?
@@ -22,7 +22,7 @@ public struct TFYCompositeIndex: Equatable, Codable {
     }
 }
 
-public struct TFYSwiftColumn: Equatable {
+public struct TFYSwiftColumn: Equatable, Sendable {
     public let propertyName: String
     public let name: String
     public let swiftType: String
@@ -37,7 +37,7 @@ public struct TFYSwiftColumn: Equatable {
     public let storageStrategy: TFYStorageStrategy
 }
 
-public struct TFYSwiftIndexDefinition: Equatable {
+public struct TFYSwiftIndexDefinition: Equatable, Sendable {
     public let name: String
     public let tableName: String
     public let columns: [String]
@@ -48,7 +48,7 @@ public struct TFYSwiftIndexDefinition: Equatable {
     }
 }
 
-public struct TFYSwiftRebuildPlan {
+public struct TFYSwiftRebuildPlan: Sendable {
     public let oldTableName: String
     public let temporaryTableName: String
     public let destinationColumns: [String]
@@ -67,7 +67,7 @@ public struct TFYSwiftRebuildPlan {
     }
 }
 
-public struct TFYSwiftModelSchema {
+public struct TFYSwiftModelSchema: Sendable {
     public let modelName: String
     public let tableName: String
     public let databaseName: String
@@ -119,7 +119,7 @@ public struct TFYSwiftModelSchema {
     }
 }
 
-public struct TFYSwiftMigrationReport {
+public struct TFYSwiftMigrationReport: Sendable {
     public let modelName: String
     public let tableName: String
     public let databaseName: String

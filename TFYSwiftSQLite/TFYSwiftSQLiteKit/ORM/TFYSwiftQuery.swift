@@ -1,7 +1,7 @@
 import Foundation
 
 @dynamicMemberLookup
-public struct TFYFields<Model: TFYSwiftDBModel> {
+public struct TFYFields<Model: TFYSwiftDBModel>: Sendable {
     public init() {}
 
     public subscript(dynamicMember member: String) -> TFYAnyField<Model> {
@@ -14,7 +14,7 @@ public struct TFYFields<Model: TFYSwiftDBModel> {
     }
 }
 
-public struct TFYAnyField<Model> {
+public struct TFYAnyField<Model>: Sendable {
     public let name: String
     fileprivate let validationError: TFYSwiftDBError?
 
@@ -28,7 +28,7 @@ public struct TFYAnyField<Model> {
     }
 }
 
-public struct TFYField<Model, Value> {
+public struct TFYField<Model, Value>: Sendable {
     public let name: String
     fileprivate let validationError: TFYSwiftDBError?
 
@@ -42,12 +42,12 @@ public struct TFYField<Model, Value> {
     }
 }
 
-public struct TFYSort<Model> {
+public struct TFYSort<Model>: Sendable {
     fileprivate let sql: String
     fileprivate let validationError: TFYSwiftDBError?
 }
 
-public struct TFYPredicate<Model> {
+public struct TFYPredicate<Model>: Sendable {
     fileprivate let sql: String
     fileprivate let bindings: [TFYSQLiteBindValue?]
     fileprivate let validationError: TFYSwiftDBError?
@@ -83,7 +83,7 @@ public struct TFYPredicate<Model> {
     }
 }
 
-public struct TFYQuery<Model: TFYSwiftDBModel> {
+public struct TFYQuery<Model: TFYSwiftDBModel>: Sendable {
     fileprivate var predicate: TFYPredicate<Model>?
     fileprivate var sorts: [TFYSort<Model>] = []
     fileprivate var limitValue: Int?
@@ -106,9 +106,7 @@ public struct TFYQuery<Model: TFYSwiftDBModel> {
     public func limit(_ value: Int, offset: Int? = nil) -> TFYQuery<Model> {
         var copy = self
         copy.limitValue = value
-        if let offset {
-            copy.offsetValue = offset
-        }
+        copy.offsetValue = offset
         return copy
     }
 
