@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
   s.name             = 'TFYSwiftSQLiteKit'
 
-  s.version          = '1.0.6'
+  s.version          = '1.0.7'
 
   s.summary          = 'Swift ORM layer on SQLite3 with property-wrapper schema and migrations.'
 
@@ -28,8 +28,8 @@ Pod::Spec.new do |s|
   s.platforms        = {
     :ios     => '15.0',
     :osx     => '13.0',
-    :tvos    => '13.0',
-    :watchos => '6.0'
+    :tvos    => '15.0',
+    :watchos => '9.0'
   }
 
   s.frameworks       = 'Foundation'

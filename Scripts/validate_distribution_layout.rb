@@ -71,4 +71,30 @@ unless project_versions == [version]
   abort_with.call("Xcode marketing versions differ: expected #{version}, got #{project_versions}")
 end
 
-puts "Distribution layout is aligned: #{source_files.count} sources, #{resource_files.count} resources, version #{version}."
+expected_platforms = {
+  "ios" => "15.0",
+  "macos" => "13.0",
+  "tvos" => "15.0",
+  "watchos" => "9.0"
+}
+pod_platform_keys = {
+  "ios" => "ios",
+  "macos" => "osx",
+  "tvos" => "tvos",
+  "watchos" => "watchos"
+}
+package_platform_versions = package.scan(/\.(iOS|macOS|tvOS|watchOS)\(\.v(\d+)\)/).to_h do |name, value|
+  [name.downcase, "#{value}.0"]
+end
+pod_platform_versions = pod_platform_keys.to_h do |name, key|
+  [name, podspec[/\:#{key}\s*=>\s*'(\d+\.\d+)'/, 1]]
+end
+
+unless package_platform_versions == expected_platforms
+  abort_with.call("SwiftPM platforms differ: expected #{expected_platforms}, got #{package_platform_versions}")
+end
+unless pod_platform_versions == expected_platforms
+  abort_with.call("CocoaPods platforms differ: expected #{expected_platforms}, got #{pod_platform_versions}")
+end
+
+puts "Distribution layout is aligned: #{source_files.count} sources, #{resource_files.count} resources, version #{version}, platforms #{expected_platforms}."

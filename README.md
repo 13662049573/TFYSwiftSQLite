@@ -4,7 +4,7 @@
 
 示例应用与单元测试位于本仓库的 Xcode 工程 `TFYSwiftSQLite.xcodeproj`（目标 `TFYSwiftSQLite` / `TFYSwiftSQLiteTests`）。独立集成库时请使用下方 **Swift Package Manager** 或 **CocoaPods**。
 
-**当前版本：`1.0.6`**
+**当前版本：`1.0.7`**
 
 ## 功能概览
 
@@ -43,7 +43,7 @@
 或在其它 Package 中依赖：
 
 ```swift
-.package(url: "https://github.com/13662049573/TFYSwiftSQLite.git", from: "1.0.6"),
+.package(url: "https://github.com/13662049573/TFYSwiftSQLite.git", from: "1.0.7"),
 ```
 
 ```swift
@@ -56,7 +56,7 @@
 ### CocoaPods
 
 ```ruby
-pod 'TFYSwiftSQLiteKit', '~> 1.0.6'
+pod 'TFYSwiftSQLiteKit', '~> 1.0.7'
 ```
 
 `TFYSwiftSQLiteKit` 的 Podspec 会逐文件显式收录库根目录下的全部 Swift 源码，并自动链接 `sqlite3`。当前源码目录为：
@@ -71,7 +71,7 @@ pod 'TFYSwiftSQLiteKit', '~> 1.0.6'
 
 当前 CocoaPods 形态仍然是一个完整 runtime pod；由于库内部存在跨目录引用，Podspec 与 Package 均逐文件声明源码和资源。发布前的一致性脚本会进行双向逐项检查，新增、遗漏或多余文件都会使验证失败，避免三处配置发生漂移。
 
-版本号与 `TFYSwiftSQLiteKit.podspec` 中 `s.version` 保持一致；Swift Package Manager 使用同名 git tag 解析版本（例如 `1.0.6`）。Podspec 与 Package 均从 `TFYSwiftSQLite/TFYSwiftSQLiteKit` 收录完整源码，并打包同一份 `PrivacyInfo.xcprivacy`。
+版本号与 `TFYSwiftSQLiteKit.podspec` 中 `s.version` 保持一致；Swift Package Manager 使用同名 git tag 解析版本（例如 `1.0.7`）。Podspec 与 Package 均从 `TFYSwiftSQLite/TFYSwiftSQLiteKit` 收录完整源码，并打包同一份 `PrivacyInfo.xcprivacy`。
 
 ## 快速上手
 
@@ -242,6 +242,12 @@ TFYSwiftSQLite/TFYSwiftSQLiteKit/
 
 ## 版本历史
 
+### 1.0.7
+
+- 将 CocoaPods 与 SwiftPM 的 tvOS 下限统一提升至 15、watchOS 下限统一提升至 9
+- 修复新版 Xcode 无法对过低 Simulator Deployment Target 执行全平台 Pod 校验的问题
+- Demo 版本展示改为读取应用构建版本，避免发布版本说明漂移
+
 ### 1.0.6
 
 - 非可选模型属性生成 `NOT NULL`，并阻止已有数据表静默新增无默认值的必填列
@@ -278,8 +284,8 @@ ruby Scripts/validate_distribution_layout.rb
 swift test
 swift build -c release
 # 3. 提交后打 tag 并推送
-git tag 1.0.6
-git push origin 1.0.6
+git tag 1.0.7
+git push origin 1.0.7
 # 4. （可选）推 CocoaPods trunk
 pod trunk push TFYSwiftSQLiteKit.podspec
 ```
@@ -300,8 +306,8 @@ swift build -c release
 - Swift 5.9+
 - iOS 15+
 - macOS 13+
-- tvOS 13+
-- watchOS 6+
+- tvOS 15+
+- watchOS 9+
 - 示例 Xcode 工程内应用目标的 **IPHONEOS_DEPLOYMENT_TARGET** 可能与上述不同，以工程设置为准
 
 ## 许可

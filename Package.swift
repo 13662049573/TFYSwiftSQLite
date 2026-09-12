@@ -2,7 +2,7 @@
 import PackageDescription
 
 // SwiftPM versions this package through Git tags. This manifest describes the
-// source and resource layout shipped by release 1.0.6.
+// source and resource layout shipped by release 1.0.7.
 let libraryRoot = "TFYSwiftSQLite/TFYSwiftSQLiteKit"
 let librarySources = [
     "Annotation/TFYSwiftColumnAnnotations.swift",
@@ -32,8 +32,8 @@ let package = Package(
     platforms: [
         .iOS(.v15),
         .macOS(.v13),
-        .tvOS(.v13),
-        .watchOS(.v6),
+        .tvOS(.v15),
+        .watchOS(.v9),
     ],
     products: [
         .library(

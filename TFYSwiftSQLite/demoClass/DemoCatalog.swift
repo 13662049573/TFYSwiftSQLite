@@ -86,6 +86,10 @@ struct DemoItem {
 enum DemoCatalog {
     static let databaseNames = ["demo_main", "channel", "audit", "demo_config"]
 
+    static var releaseVersion: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Development"
+    }
+
     static let items: [DemoItem] = [
         // MARK: Connection
         DemoItem(section: .connection, title: "打开命名数据库", subtitle: "TFYSwiftDatabaseCenter.open") {
@@ -654,7 +658,7 @@ enum DemoCatalog {
     }
 
     static func runAll() throws -> String {
-        var lines: [String] = ["=== TFYSwiftSQLiteKit 1.0.6 Full Demo ==="]
+        var lines: [String] = ["=== TFYSwiftSQLiteKit \(releaseVersion) Full Demo ==="]
         var passed = 0
         var failed = 0
         let started = CFAbsoluteTimeGetCurrent()

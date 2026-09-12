@@ -281,7 +281,7 @@ private final class DemoSummaryHeaderView: UIView {
         versionLabel.font = .preferredFont(forTextStyle: .caption1)
         versionLabel.adjustsFontForContentSizeCategory = true
         versionLabel.textColor = .systemIndigo
-        versionLabel.text = "TFYSwiftSQLiteKit 1.0.6"
+        versionLabel.text = "TFYSwiftSQLiteKit \(DemoCatalog.releaseVersion)"
 
         bodyLabel.font = .preferredFont(forTextStyle: .subheadline)
         bodyLabel.adjustsFontForContentSizeCategory = true
@@ -315,6 +315,6 @@ private final class DemoSummaryHeaderView: UIView {
         ])
 
         isAccessibilityElement = true
-        accessibilityLabel = "TFYSwiftSQLiteKit 1.0.6，\(sectionCount) 个主题，\(itemCount) 个示例"
+        accessibilityLabel = "TFYSwiftSQLiteKit \(DemoCatalog.releaseVersion)，\(sectionCount) 个主题，\(itemCount) 个示例"
     }
 }
