@@ -1,4 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+//
+//  TFYSwiftSQLiteTests.xcscheme
+//  TFYSwiftSQLiteKit
+//
+//  Created by 田风有 on 2021/5/9.
+//
+-->
+
 <Scheme
    LastUpgradeVersion = "2640"
    version = "1.3">

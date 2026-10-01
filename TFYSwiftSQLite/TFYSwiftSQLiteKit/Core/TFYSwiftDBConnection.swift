@@ -1,5 +1,20 @@
+//
+//  TFYSwiftDBConnection.swift
+//  TFYSwiftSQLiteKit
+//
+//  Created by 田风有 on 2021/5/9.
+//
+
 import Foundation
+import Darwin
+#if TFY_SQLCIPHER
+import SQLCipher
+#if SWIFT_PACKAGE
+import CTFYSQLCipher
+#endif
+#else
 import SQLite3
+#endif
 
 public struct TFYSwiftDBConfiguration: Equatable, Sendable {
     public enum JournalMode: String, Sendable {
@@ -25,19 +40,22 @@ public struct TFYSwiftDBConfiguration: Equatable, Sendable {
     public var synchronousMode: SynchronousMode
     public var busyTimeout: TimeInterval
     public var walAutoCheckpoint: Int?
+    public var encryption: TFYSwiftDBEncryption?
 
     public init(
         foreignKeysEnabled: Bool = true,
         journalMode: JournalMode = .wal,
         synchronousMode: SynchronousMode = .normal,
         busyTimeout: TimeInterval = 5,
-        walAutoCheckpoint: Int? = 1_000
+        walAutoCheckpoint: Int? = 1_000,
+        encryption: TFYSwiftDBEncryption? = nil
     ) {
         self.foreignKeysEnabled = foreignKeysEnabled
         self.journalMode = journalMode
         self.synchronousMode = synchronousMode
         self.busyTimeout = busyTimeout
         self.walAutoCheckpoint = walAutoCheckpoint
+        self.encryption = encryption
     }
 }
 
@@ -53,12 +71,18 @@ public struct TFYSQLiteIndexInfo: Equatable, Sendable {
     public let name: String
     public let columns: [String]
     public let unique: Bool
+    public let isPartial: Bool
+    /// Expressions, descending keys or a non-BINARY collation cannot satisfy a plain ORM index.
+    public let usesCustomComparison: Bool
 }
 
 public final class TFYSwiftDBConnection: @unchecked Sendable {
     public let databaseName: String
     public let path: String
-    public let configuration: TFYSwiftDBConfiguration
+    private var storedConfiguration: TFYSwiftDBConfiguration
+    public var configuration: TFYSwiftDBConfiguration {
+        withConnectionLock { storedConfiguration }
+    }
 
     private var handle: OpaquePointer?
     private let connectionLock = NSRecursiveLock()
@@ -70,9 +94,12 @@ public final class TFYSwiftDBConnection: @unchecked Sendable {
         configuration: TFYSwiftDBConfiguration = .default
     ) throws {
         try Self.validate(configuration)
+        guard !path.utf8.contains(0), !path.isEmpty else {
+            throw TFYSwiftDBError.invalidConfiguration("Database path must be non-empty and contain no NUL bytes.")
+        }
         self.databaseName = databaseName
         self.path = path
-        self.configuration = configuration
+        self.storedConfiguration = configuration
 
         var database: OpaquePointer?
         let flags = SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX
@@ -86,6 +113,7 @@ public final class TFYSwiftDBConnection: @unchecked Sendable {
 
         do {
             sqlite3_extended_result_codes(database, 1)
+            try applyEncryption(configuration.encryption, to: database)
             let timeoutMilliseconds = Int32((configuration.busyTimeout * 1_000).rounded())
             let timeoutCode = sqlite3_busy_timeout(database, timeoutMilliseconds)
             guard timeoutCode == SQLITE_OK else {
@@ -152,7 +180,7 @@ public final class TFYSwiftDBConnection: @unchecked Sendable {
     public func close() throws {
         try withConnectionLock {
             guard let handle else { return }
-            guard transactionDepth == 0 else {
+            guard transactionDepth == 0, sqlite3_get_autocommit(handle) != 0 else {
                 throw TFYSwiftDBError.closeDatabase(
                     path: path,
                     message: "Cannot close a database from inside an active transaction."
@@ -193,7 +221,8 @@ public final class TFYSwiftDBConnection: @unchecked Sendable {
             try TFYSwiftDBStatement(
                 connection: requireHandle(),
                 sql: sql,
-                connectionLock: connectionLock
+                connectionLock: connectionLock,
+                owner: self
             )
         }
     }
@@ -205,7 +234,7 @@ public final class TFYSwiftDBConnection: @unchecked Sendable {
                 throw TFYSwiftDBError.invalidQuery("A prepared statement must be executed by the connection that created it.")
             }
             try measure(statement.sql, bindings: bindings) {
-                try statement.reset()
+                statement.resetForReuse()
                 try statement.clearBindings()
                 try statement.bind(bindings)
                 while try statement.step() {}
@@ -243,7 +272,7 @@ public final class TFYSwiftDBConnection: @unchecked Sendable {
                 throw TFYSwiftDBError.invalidQuery("A prepared statement must be queried by the connection that created it.")
             }
             return try measure(statement.sql, bindings: bindings) {
-                try statement.reset()
+                statement.resetForReuse()
                 try statement.clearBindings()
                 try statement.bind(bindings)
 
@@ -258,7 +287,11 @@ public final class TFYSwiftDBConnection: @unchecked Sendable {
 
     public func withTransaction<T>(_ block: () throws -> T) throws -> T {
         try withConnectionLock {
+            let database = try requireHandle()
             let currentDepth = transactionDepth
+            guard currentDepth > 0 || sqlite3_get_autocommit(database) != 0 else {
+                throw TFYSwiftDBError.invalidQuery("A raw SQL transaction is already active. Finish it before using withTransaction.")
+            }
             transactionDepth += 1
             let savepointName = "tfy_savepoint_\(transactionDepth)"
 
@@ -294,7 +327,7 @@ public final class TFYSwiftDBConnection: @unchecked Sendable {
         let rows = try query(
             """
             SELECT name FROM sqlite_master
-            WHERE type = 'table' AND name = ?;
+            WHERE type = 'table' AND name = ? COLLATE NOCASE;
             """,
             bindings: [.text(tableName)]
         )
@@ -311,8 +344,8 @@ public final class TFYSwiftDBConnection: @unchecked Sendable {
             return TFYSQLiteTableColumnInfo(
                 name: name,
                 type: type,
-                defaultValueSQL: row["dflt_value"].map(TFYSwiftTypeMapper.stringValue),
-                isPrimaryKey: row["pk"].map(TFYSwiftTypeMapper.numericValue(from:)) == 1,
+                defaultValueSQL: row["dflt_value"].flatMap { $0 == .null ? nil : TFYSwiftTypeMapper.stringValue(from: $0) },
+                isPrimaryKey: (row["pk"].map(TFYSwiftTypeMapper.numericValue(from:)) ?? 0) > 0,
                 isNotNull: row["notnull"].map(TFYSwiftTypeMapper.numericValue(from:)) == 1
             )
         }
@@ -329,16 +362,21 @@ public final class TFYSwiftDBConnection: @unchecked Sendable {
                 continue
             }
             let unique = row["unique"].map(TFYSwiftTypeMapper.numericValue(from:)) == 1
-            let infoRows = try query("PRAGMA index_info(\(TFYSwiftSQL.escapeIdentifier(name)));")
-            let columns = infoRows.sorted {
+            let infoRows = try query("PRAGMA index_xinfo(\(TFYSwiftSQL.escapeIdentifier(name)));")
+            let keyRows = infoRows.filter { $0["key"] == .integer(1) }
+            let columns = keyRows.sorted {
                 TFYSwiftTypeMapper.numericValue(from: $0["seqno"] ?? .integer(0)) <
                 TFYSwiftTypeMapper.numericValue(from: $1["seqno"] ?? .integer(0))
             }.compactMap { infoRow -> String? in
-                guard let value = infoRow["name"] else { return nil }
-                return TFYSwiftTypeMapper.stringValue(from: value)
+                guard case let .text(name)? = infoRow["name"] else { return nil }
+                return name
             }
-
-            indexes.append(TFYSQLiteIndexInfo(name: name, columns: columns, unique: unique))
+            let custom = keyRows.contains {
+                guard case let .text(collation)? = $0["coll"] else { return true }
+                return $0["name"] == .null || $0["desc"] == .integer(1) || collation.caseInsensitiveCompare("BINARY") != .orderedSame
+            }
+            indexes.append(TFYSQLiteIndexInfo(name: name, columns: columns, unique: unique,
+                                              isPartial: row["partial"] == .integer(1), usesCustomComparison: custom))
         }
 
         return indexes
@@ -360,6 +398,280 @@ public final class TFYSwiftDBConnection: @unchecked Sendable {
         }
     }
 
+    /// SQLCipher is an explicitly selected backend; encryption never falls back to plaintext.
+    public static var supportsEncryption: Bool {
+        #if TFY_SQLCIPHER
+        true
+        #else
+        false
+        #endif
+    }
+
+    public var isEncrypted: Bool { configuration.encryption != nil }
+
+    public func cipherVersion() throws -> String? {
+        guard Self.supportsEncryption else { return nil }
+        guard case let .text(version)? = try scalar("PRAGMA cipher_version;") else { return nil }
+        return version
+    }
+
+    /// Changes an already encrypted database's key. The key is never passed through SQL logging.
+    public func rekey(_ key: TFYSwiftDBKey) throws {
+        try withConnectionLock {
+            let database = try requireHandle()
+            guard transactionDepth == 0, sqlite3_get_autocommit(database) != 0,
+                  sqlite3_next_stmt(database, nil) == nil else {
+                throw TFYSwiftDBError.encryption("Rekey requires no active transaction or prepared statements.")
+            }
+            guard let encryption = storedConfiguration.encryption else {
+                throw TFYSwiftDBError.encryption("Use export(to:encryption:) to encrypt a plaintext database.")
+            }
+            #if TFY_SQLCIPHER
+            let code = key.withBytes {
+                #if SWIFT_PACKAGE
+                tfy_sqlcipher_rekey(UnsafeMutableRawPointer(database), $0, $1)
+                #else
+                sqlite3_rekey(database, $0, $1)
+                #endif
+            }
+            guard code == SQLITE_OK else {
+                throw TFYSwiftDBError.encryption("SQLCipher rekey failed (code \(code)).")
+            }
+            storedConfiguration.encryption = TFYSwiftDBEncryption(key: key, compatibility: encryption.compatibility)
+            #else
+            throw TFYSwiftDBError.encryptionUnavailable
+            #endif
+        }
+    }
+
+    public enum CheckpointMode: Int32, Sendable {
+        case passive = 0, full = 1, restart = 2, truncate = 3
+    }
+
+    public struct CheckpointResult: Equatable, Sendable {
+        public let busy: Bool
+        public let logFrames: Int32
+        public let checkpointedFrames: Int32
+    }
+
+    public func checkpoint(_ mode: CheckpointMode = .passive) throws -> CheckpointResult {
+        try withConnectionLock {
+            let database = try requireHandle()
+            try requireMaintenanceState(database)
+            var logFrames: Int32 = 0
+            var checkpointedFrames: Int32 = 0
+            let code = sqlite3_wal_checkpoint_v2(database, "main", mode.rawValue, &logFrames, &checkpointedFrames)
+            guard code == SQLITE_OK || code == SQLITE_BUSY else {
+                throw TFYSwiftDBError.maintenance("WAL checkpoint failed (code \(code)).")
+            }
+            return CheckpointResult(busy: code == SQLITE_BUSY, logFrames: logFrames, checkpointedFrames: checkpointedFrames)
+        }
+    }
+
+    public func integrityCheck() throws -> [String] {
+        try query("PRAGMA integrity_check;").flatMap { $0.values.map(TFYSwiftTypeMapper.stringValue(from:)) }
+    }
+
+    /// SQLCipher HMAC validation returns no rows on success.
+    public func cipherIntegrityCheck() throws -> [String] {
+        guard Self.supportsEncryption, isEncrypted else {
+            throw TFYSwiftDBError.encryption("Cipher integrity checks require an encrypted SQLCipher connection.")
+        }
+        return try query("PRAGMA cipher_integrity_check;").flatMap { $0.values.map(TFYSwiftTypeMapper.stringValue(from:)) }
+    }
+
+    /// Visits rows without materializing the entire result. The connection is locked for the callback duration.
+    /// Do not wait for another thread using this connection inside the callback.
+    public func forEachRow(
+        _ sql: String,
+        bindings: [TFYSQLiteBindValue?] = [],
+        _ body: ([String: TFYSQLiteValue]) throws -> Void
+    ) throws {
+        try withConnectionLock {
+            let statement = try prepare(sql)
+            try measure(sql, bindings: bindings) {
+                try statement.bind(bindings)
+                while try statement.step() { try body(statement.row()) }
+            }
+        }
+    }
+
+    /// Captures the row ID under the same lock as INSERT, preventing competing inserts from replacing it.
+    @discardableResult
+    public func executeReturningRowID(_ sql: String, bindings: [TFYSQLiteBindValue?] = []) throws -> Int64 {
+        try withConnectionLock {
+            try execute(sql, bindings: bindings)
+            return lastInsertedRowID
+        }
+    }
+
+    /// A consistent file backup including committed WAL data. Never overwrites an existing destination.
+    /// SQLCipher connections use export so the destination keeps the same encryption settings.
+    public func backup(to destination: URL) throws {
+        if let encryption = configuration.encryption {
+            try export(to: destination, encryption: encryption)
+            return
+        }
+        try withConnectionLock {
+            let database = try requireHandle()
+            try requireMaintenanceState(database)
+            let destinationPath = try reserveDestination(destination)
+            var succeeded = false
+            defer { if !succeeded { Self.removeExportFiles(at: destinationPath) } }
+            let target = try TFYSwiftDBConnection(
+                path: destinationPath, databaseName: "backup",
+                configuration: TFYSwiftDBConfiguration(journalMode: .delete, synchronousMode: .full)
+            )
+            do {
+                guard let backup = sqlite3_backup_init(try target.requireHandle(), "main", database, "main") else {
+                    throw TFYSwiftDBError.maintenance("Unable to initialize SQLite backup.")
+                }
+                let stepCode = sqlite3_backup_step(backup, -1)
+                let finishCode = sqlite3_backup_finish(backup)
+                guard stepCode == SQLITE_DONE, finishCode == SQLITE_OK else {
+                    throw TFYSwiftDBError.maintenance("SQLite backup failed (code \(stepCode), finish \(finishCode)).")
+                }
+                guard try target.integrityCheck() == ["ok"] else {
+                    throw TFYSwiftDBError.maintenance("Backup integrity check failed.")
+                }
+                try target.close()
+                succeeded = true
+            } catch {
+                try? target.close()
+                throw error
+            }
+        }
+    }
+
+    /// Copies a snapshot into a NEW file. nil encryption exports plaintext; a key encrypts it.
+    /// Use this for plaintext→SQLCipher conversion, decryption, or format upgrades; the source is preserved.
+    /// Encryption operations bypass the SQL logger even under bindingPolicy: .full.
+    public func export(to destination: URL, encryption: TFYSwiftDBEncryption?) throws {
+        #if TFY_SQLCIPHER
+        try withConnectionLock {
+            let database = try requireHandle()
+            try requireMaintenanceState(database)
+            guard let version = try cipherVersion(), !version.isEmpty else {
+                throw TFYSwiftDBError.encryptionUnavailable
+            }
+            let destinationPath = try reserveDestination(destination)
+            var succeeded = false
+            defer { if !succeeded { Self.removeExportFiles(at: destinationPath) } }
+            var attached = false
+            do {
+                try executeWithoutLogging(
+                    "ATTACH DATABASE ? AS tfy_export KEY ?;",
+                    bindings: [.text(destinationPath), encryption?.key.exportBinding ?? .blob(Data())]
+                )
+                attached = true
+                if let encryption {
+                    try executeWithoutLogging("PRAGMA tfy_export.cipher_compatibility = \(encryption.compatibility.rawValue);")
+                }
+                try executeWithoutLogging("PRAGMA tfy_export.journal_mode = DELETE;")
+                try withTransaction {
+                    let userVersion = try scalar("PRAGMA user_version;") ?? .integer(0)
+                    let applicationID = try scalar("PRAGMA application_id;") ?? .integer(0)
+                    try executeWithoutLogging("SELECT sqlcipher_export('tfy_export');")
+                    try executeWithoutLogging("PRAGMA tfy_export.user_version = \(TFYSwiftTypeMapper.numericValue(from: userVersion));")
+                    try executeWithoutLogging("PRAGMA tfy_export.application_id = \(TFYSwiftTypeMapper.numericValue(from: applicationID));")
+                }
+                try executeWithoutLogging("DETACH DATABASE tfy_export;")
+                attached = false
+                let target = try TFYSwiftDBConnection(
+                    path: destinationPath, databaseName: "export-verification",
+                    configuration: TFYSwiftDBConfiguration(journalMode: .delete, synchronousMode: .full, encryption: encryption)
+                )
+                do {
+                    guard try target.integrityCheck() == ["ok"] else {
+                        throw TFYSwiftDBError.encryption("Export integrity check failed.")
+                    }
+                    if encryption != nil, try !target.cipherIntegrityCheck().isEmpty {
+                        throw TFYSwiftDBError.encryption("Export cipher integrity check failed.")
+                    }
+                    try target.close()
+                } catch {
+                    try? target.close()
+                    throw error
+                }
+                succeeded = true
+            } catch {
+                if attached { try? executeWithoutLogging("DETACH DATABASE tfy_export;") }
+                throw TFYSwiftDBError.encryption("SQLCipher export failed; the source database was preserved.")
+            }
+        }
+        #else
+        throw TFYSwiftDBError.encryptionUnavailable
+        #endif
+    }
+
+    private func executeWithoutLogging(_ sql: String, bindings: [TFYSQLiteBindValue?] = []) throws {
+        let statement = try TFYSwiftDBStatement(connection: requireHandle(), sql: sql, connectionLock: connectionLock)
+        try statement.bind(bindings)
+        while try statement.step() {}
+    }
+
+    private func requireMaintenanceState(_ database: OpaquePointer) throws {
+        guard transactionDepth == 0, sqlite3_get_autocommit(database) != 0,
+              sqlite3_next_stmt(database, nil) == nil else {
+            throw TFYSwiftDBError.maintenance("Maintenance requires no active transaction or prepared statements.")
+        }
+    }
+
+    private func reserveDestination(_ destination: URL) throws -> String {
+        guard destination.isFileURL, !destination.path.utf8.contains(0) else {
+            throw TFYSwiftDBError.maintenance("Destination must be a local file URL without NUL bytes.")
+        }
+        let destinationPath = destination.standardizedFileURL.resolvingSymlinksInPath().path
+        let sourcePath = URL(fileURLWithPath: path).standardizedFileURL.resolvingSymlinksInPath().path
+        guard destinationPath != sourcePath,
+              !FileManager.default.fileExists(atPath: destinationPath + "-wal"),
+              !FileManager.default.fileExists(atPath: destinationPath + "-shm"),
+              !FileManager.default.fileExists(atPath: destinationPath + "-journal") else {
+            throw TFYSwiftDBError.maintenance("Destination must differ from source and have no existing database sidecars.")
+        }
+        // Exclusive creation closes the check/create race and restricts file permissions to the owner.
+        let descriptor = Darwin.open(destinationPath, O_WRONLY | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR)
+        guard descriptor >= 0 else {
+            throw TFYSwiftDBError.maintenance("Cannot create destination; it may already exist or its directory is unavailable.")
+        }
+        Darwin.close(descriptor)
+        return destinationPath
+    }
+
+    private static func removeExportFiles(at path: String) {
+        for file in [path, path + "-wal", path + "-shm", path + "-journal"] {
+            try? FileManager.default.removeItem(atPath: file)
+        }
+    }
+
+    private func applyEncryption(_ encryption: TFYSwiftDBEncryption?, to database: OpaquePointer) throws {
+        guard let encryption else { return }
+        #if TFY_SQLCIPHER
+        // Check the actual linked runtime too: a second SQLite library must never silently disable encryption.
+        guard let version = try cipherVersion(), !version.isEmpty else {
+            throw TFYSwiftDBError.encryptionUnavailable
+        }
+        let code = encryption.key.withBytes {
+            #if SWIFT_PACKAGE
+            tfy_sqlcipher_key(UnsafeMutableRawPointer(database), $0, $1)
+            #else
+            sqlite3_key(database, $0, $1)
+            #endif
+        }
+        guard code == SQLITE_OK else {
+            throw TFYSwiftDBError.encryption("SQLCipher key setup failed (code \(code)).")
+        }
+        try execute("PRAGMA cipher_compatibility = \(encryption.compatibility.rawValue);")
+        do {
+            _ = try scalar("SELECT count(*) FROM sqlite_master;")
+        } catch {
+            throw TFYSwiftDBError.encryption("Cannot read encrypted database: wrong key, incompatible format, or damaged file.")
+        }
+        #else
+        throw TFYSwiftDBError.encryptionUnavailable
+        #endif
+    }
+
     private func requireHandle() throws -> OpaquePointer {
         guard let handle else {
             throw TFYSwiftDBError.databaseClosed(path: path)
@@ -367,7 +679,7 @@ public final class TFYSwiftDBConnection: @unchecked Sendable {
         return handle
     }
 
-    private func withConnectionLock<T>(_ work: () throws -> T) rethrows -> T {
+    func withConnectionLock<T>(_ work: () throws -> T) rethrows -> T {
         connectionLock.lock()
         defer { connectionLock.unlock() }
         return try work()
@@ -409,6 +721,9 @@ public final class TFYSwiftDBConnection: @unchecked Sendable {
     }
 
     private static func validate(_ configuration: TFYSwiftDBConfiguration) throws {
+        if configuration.encryption != nil, !supportsEncryption {
+            throw TFYSwiftDBError.encryptionUnavailable
+        }
         let timeoutMilliseconds = configuration.busyTimeout * 1_000
         guard configuration.busyTimeout.isFinite,
               timeoutMilliseconds >= 0,

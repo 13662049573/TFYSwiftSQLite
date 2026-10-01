@@ -1,3 +1,10 @@
+//
+//  DemoModels.swift
+//  TFYSwiftSQLiteKit
+//
+//  Created by 田风有 on 2021/5/9.
+//
+
 import Foundation
 import TFYSwiftSQLiteKit
 
@@ -170,4 +177,10 @@ struct OptionalNote: TFYSwiftDBModel {
     static var databaseName: String { "demo_main" }
 
     static let noteField = field("note", as: String?.self)
+}
+
+struct CipherDemoModel: TFYSwiftDBModel {
+    @TFYPrimaryKey(autoIncrement: true) var id: Int = 0
+    var message = "encrypted"
+    static var databaseName: String { "demo_cipher" }
 }

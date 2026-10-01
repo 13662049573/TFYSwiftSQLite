@@ -1,3 +1,10 @@
+//
+//  DemoCatalog.swift
+//  TFYSwiftSQLiteKit
+//
+//  Created by 田风有 on 2021/5/9.
+//
+
 import Foundation
 import TFYSwiftSQLiteKit
 
@@ -11,6 +18,7 @@ enum DemoSection: Int, CaseIterable {
     case migration
     case lowLevel
     case benchmark
+    case encryption
 
     var title: String {
         switch self {
@@ -23,6 +31,7 @@ enum DemoSection: Int, CaseIterable {
         case .migration: return "安全迁移"
         case .lowLevel: return "底层 API"
         case .benchmark: return "性能与诊断"
+        case .encryption: return "SQLCipher 加密"
         }
     }
 
@@ -41,6 +50,7 @@ enum DemoSection: Int, CaseIterable {
         case .migration: return "安全升级拒绝、默认值升级、重建与迁移日志。"
         case .lowLevel: return "原始 SQL、预编译语句、指标、元数据与错误。"
         case .benchmark: return "读写基准与完整 Demo 自检。"
+        case .encryption: return "真实加密文件、ORM、密钥轮换、转换与备份。"
         }
     }
 
@@ -55,6 +65,7 @@ enum DemoSection: Int, CaseIterable {
         case .migration: return "arrow.up.doc"
         case .lowLevel: return "terminal"
         case .benchmark: return "speedometer"
+        case .encryption: return "lock.shield"
         }
     }
 }
@@ -84,13 +95,86 @@ struct DemoItem {
 }
 
 enum DemoCatalog {
-    static let databaseNames = ["demo_main", "channel", "audit", "demo_config"]
+    static let databaseNames = ["demo_main", "channel", "audit", "demo_config", "demo_cipher"]
 
     static var releaseVersion: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Development"
     }
 
     static let items: [DemoItem] = [
+        // MARK: SQLCipher (demo keys are examples only; production secrets belong in Keychain)
+        DemoItem(section: .encryption, title: "加密后端与版本", subtitle: "验证实际链接的 SQLCipher 引擎") {
+            try reset()
+            let connection = try TFYSwiftDBConnection(path: ":memory:", databaseName: "cipher_version")
+            defer { try? connection.close() }
+            guard TFYSwiftDBConnection.supportsEncryption, let version = try connection.cipherVersion() else {
+                throw DemoAssertError("请启用 SQLCipher trait 或 SQLCipher Pod subspec。")
+            }
+            return ok(["SQLCipher: \(version)", "默认明文数据库仍可使用同一套接口。"])
+        },
+        DemoItem(section: .encryption, title: "加密 ORM 与事务", subtitle: "模型接口保持不变，检查文件头已加密") {
+            let connection = try prepareCipherDemo()
+            try CipherDemoModel.transaction { try CipherDemoModel.insert([CipherDemoModel(), CipherDemoModel()]) }
+            let count = try CipherDemoModel.count(CipherDemoModel.query().where(CipherDemoModel.fields.message == "encrypted"))
+            guard count == 2 else { throw DemoAssertError("加密 ORM 查询未返回预期数据。") }
+            guard try connection.integrityCheck() == ["ok"], try connection.cipherIntegrityCheck().isEmpty else {
+                throw DemoAssertError("数据库完整性检查失败。")
+            }
+            _ = try connection.checkpoint(.truncate)
+            let file = try Data(contentsOf: URL(fileURLWithPath: connection.path))
+            guard file.prefix(16) != Data("SQLite format 3\0".utf8) else { throw DemoAssertError("文件未加密。") }
+            return ok(["加密查询: \(count) 条", "SQLite 完整性与 SQLCipher HMAC 检查通过", "文件头已加密"])
+        },
+        DemoItem(section: .encryption, title: "轮换密钥与重新打开", subtitle: "新密钥继续访问，旧密钥被拒绝") {
+            let connection = try prepareCipherDemo()
+            try CipherDemoModel().insert()
+            let center = TFYSwiftDatabaseCenter.shared
+            try center.rekey(named: CipherDemoModel.databaseName, key: TFYSwiftDBKey(passphrase: "demo-only-new-key"))
+            guard center.close(named: CipherDemoModel.databaseName) else { throw DemoAssertError("关闭失败。") }
+            guard try CipherDemoModel.count() == 1 else { throw DemoAssertError("新密钥重开失败。") }
+            var rejected = false
+            do {
+                let old = try TFYSwiftDBConnection(path: connection.path, databaseName: "wrong_key", configuration: cipherDemoConfiguration())
+                try old.close()
+            } catch { rejected = true }
+            guard rejected else { throw DemoAssertError("旧密钥未被拒绝。") }
+            return ok(["轮换后模型接口自动使用新密钥", "旧密钥访问已拒绝"])
+        },
+        DemoItem(section: .encryption, title: "明文转换与解密导出", subtitle: "新文件导出，保留源库与版本信息") {
+            try reset()
+            let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            defer { try? FileManager.default.removeItem(at: directory) }
+            let source = try TFYSwiftDBConnection(path: ":memory:", databaseName: "conversion")
+            defer { try? source.close() }
+            try source.execute("CREATE TABLE sample(value TEXT);")
+            try source.execute("INSERT INTO sample VALUES ('preserved');")
+            try source.execute("PRAGMA user_version = 7;")
+            let encryptedURL = directory.appendingPathComponent("encrypted.db")
+            try source.export(to: encryptedURL, encryption: cipherDemoConfiguration().encryption)
+            let encrypted = try TFYSwiftDBConnection(path: encryptedURL.path, databaseName: "encrypted", configuration: cipherDemoConfiguration())
+            defer { try? encrypted.close() }
+            let plainURL = directory.appendingPathComponent("decrypted.db")
+            try encrypted.export(to: plainURL, encryption: nil)
+            let plain = try TFYSwiftDBConnection(path: plainURL.path, databaseName: "decrypted")
+            defer { try? plain.close() }
+            guard try plain.scalar("SELECT value FROM sample;") == .text("preserved"),
+                  try plain.scalar("PRAGMA user_version;") == .integer(7) else { throw DemoAssertError("导出数据未保留。") }
+            return ok(["明文 → 加密 → 明文，数据与 user_version 保留", "源库未被替换"])
+        },
+        DemoItem(section: .encryption, title: "加密备份与恢复", subtitle: "WAL 数据进入备份，恢复仍需要原密钥") {
+            let connection = try prepareCipherDemo()
+            try CipherDemoModel().insert()
+            let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            defer { try? FileManager.default.removeItem(at: directory) }
+            let backupURL = directory.appendingPathComponent("backup.db")
+            try connection.backup(to: backupURL)
+            let backup = try TFYSwiftDBConnection(path: backupURL.path, databaseName: "backup", configuration: cipherDemoConfiguration())
+            defer { try? backup.close() }
+            guard try backup.scalar("SELECT count(*) FROM cipherdemomodel;") == .integer(1) else { throw DemoAssertError("备份恢复失败。") }
+            return ok(["加密备份恢复: 1 条", "备份保留加密格式"])
+        },
         // MARK: Connection
         DemoItem(section: .connection, title: "打开命名数据库", subtitle: "TFYSwiftDatabaseCenter.open") {
             try reset()
@@ -740,4 +824,15 @@ private func makeUser(
         cacheOnlyField: "not persisted",
         address: DemoAddress(city: city, zipCode: "000000")
     )
+}
+
+private func cipherDemoConfiguration() throws -> TFYSwiftDBConfiguration {
+    TFYSwiftDBConfiguration(encryption: TFYSwiftDBEncryption(key: try TFYSwiftDBKey(passphrase: "demo-only-key")))
+}
+
+private func prepareCipherDemo() throws -> TFYSwiftDBConnection {
+    try reset()
+    try CipherDemoModel.configureDatabase(cipherDemoConfiguration())
+    _ = try CipherDemoModel.createTable()
+    return try TFYSwiftDatabaseCenter.shared.open(named: CipherDemoModel.databaseName)
 }

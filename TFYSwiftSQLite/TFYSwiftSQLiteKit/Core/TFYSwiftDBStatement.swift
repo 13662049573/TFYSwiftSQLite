@@ -1,5 +1,16 @@
+//
+//  TFYSwiftDBStatement.swift
+//  TFYSwiftSQLiteKit
+//
+//  Created by 田风有 on 2021/5/9.
+//
+
 import Foundation
+#if TFY_SQLCIPHER
+import SQLCipher
+#else
 import SQLite3
+#endif
 
 public enum TFYSQLiteBindValue: Equatable, Sendable {
     case integer(Int64)
@@ -56,18 +67,51 @@ public final class TFYSwiftDBStatement: @unchecked Sendable {
     private let connection: OpaquePointer?
     private let connectionLock: NSRecursiveLock
     private var statement: OpaquePointer?
+    // Keep the originating connection alive until sqlite3_finalize.
+    private let owner: TFYSwiftDBConnection?
 
     public convenience init(connection: OpaquePointer?, sql: String) throws {
         try self.init(connection: connection, sql: sql, connectionLock: NSRecursiveLock())
     }
 
-    init(connection: OpaquePointer?, sql: String, connectionLock: NSRecursiveLock) throws {
+    init(connection: OpaquePointer?, sql: String, connectionLock: NSRecursiveLock, owner: TFYSwiftDBConnection? = nil) throws {
+        self.owner = owner
         self.connection = connection
         self.connectionLock = connectionLock
         self.sql = sql
-        let code = sqlite3_prepare_v2(connection, sql, -1, &statement, nil)
-        guard code == SQLITE_OK else {
-            throw TFYSwiftDBError.prepare(sql: sql, message: TFYSwiftDBStatement.lastErrorMessage(connection))
+        guard !sql.utf8.contains(0) else {
+            throw TFYSwiftDBError.invalidQuery("SQL must not contain NUL bytes. Bind text values instead.")
+        }
+        // Parse the tail with SQLite itself, allowing whitespace/comments while rejecting a second statement.
+        try sql.withCString { start in
+            var tail: UnsafePointer<CChar>?
+            let code = sqlite3_prepare_v2(connection, start, -1, &statement, &tail)
+            guard code == SQLITE_OK else {
+                sqlite3_finalize(statement)
+                statement = nil
+                throw TFYSwiftDBError.prepare(sql: sql, message: Self.lastErrorMessage(connection))
+            }
+            do {
+                guard statement != nil else {
+                    throw TFYSwiftDBError.invalidQuery("SQL must contain one executable statement.")
+                }
+                while let remainder = tail, remainder.pointee != 0 {
+                    var extra: OpaquePointer?
+                    var next: UnsafePointer<CChar>?
+                    let tailCode = sqlite3_prepare_v2(connection, remainder, -1, &extra, &next)
+                    let hasExtra = extra != nil
+                    sqlite3_finalize(extra)
+                    guard tailCode == SQLITE_OK, !hasExtra else {
+                        throw TFYSwiftDBError.invalidQuery("Only one SQL statement is allowed per call.")
+                    }
+                    guard let next, next > remainder else { break }
+                    tail = next
+                }
+            } catch {
+                sqlite3_finalize(statement)
+                statement = nil
+                throw error
+            }
         }
     }
 
@@ -97,6 +141,12 @@ public final class TFYSwiftDBStatement: @unchecked Sendable {
                 throw TFYSwiftDBError.step(sql: sql, message: TFYSwiftDBStatement.lastErrorMessage(connection))
             }
         }
+    }
+
+    // sqlite3_reset reports the PREVIOUS step failure even though it successfully resets the VM.
+    // Connection-level reuse must allow a successful operation after a failed constraint binding.
+    func resetForReuse() {
+        withLock { _ = sqlite3_reset(statement) }
     }
 
     public func clearBindings() throws {
@@ -158,6 +208,9 @@ public final class TFYSwiftDBStatement: @unchecked Sendable {
         case let .integer(number):
             code = sqlite3_bind_int64(statement, index, number)
         case let .double(number):
+            guard number.isFinite else {
+                throw TFYSwiftDBError.bind(index: Int(index), message: "Floating-point bindings must be finite.")
+            }
             code = sqlite3_bind_double(statement, index, number)
         case let .text(text):
             let byteCount = text.utf8.count

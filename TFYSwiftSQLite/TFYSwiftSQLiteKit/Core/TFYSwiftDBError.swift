@@ -1,6 +1,16 @@
+//
+//  TFYSwiftDBError.swift
+//  TFYSwiftSQLiteKit
+//
+//  Created by 田风有 on 2021/5/9.
+//
+
 import Foundation
 
 public enum TFYSwiftDBError: Error, CustomStringConvertible, LocalizedError, Sendable {
+    case encryptionUnavailable
+    case encryption(String)
+    case maintenance(String)
     case openDatabase(path: String, message: String)
     case closeDatabase(path: String, message: String)
     case databaseClosed(path: String)
@@ -20,6 +30,8 @@ public enum TFYSwiftDBError: Error, CustomStringConvertible, LocalizedError, Sen
 
     public var description: String {
         switch self {
+        case .encryptionUnavailable:
+            return "SQLCipher backend is unavailable. Enable the SQLCipher package trait or CocoaPods subspec."
         case let .openDatabase(path, message):
             return "Failed to open database at \(path): \(message)"
         case let .closeDatabase(path, message):
@@ -43,7 +55,9 @@ public enum TFYSwiftDBError: Error, CustomStringConvertible, LocalizedError, Sen
              let .decoding(message),
              let .invalidQuery(message),
              let .migrationConflict(message),
-             let .notFound(message):
+             let .notFound(message),
+             let .encryption(message),
+             let .maintenance(message):
             return message
         }
     }

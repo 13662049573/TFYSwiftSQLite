@@ -1,3 +1,10 @@
+//
+//  TFYSwiftTypeMapper.swift
+//  TFYSwiftSQLiteKit
+//
+//  Created by 田风有 on 2021/5/9.
+//
+
 import Foundation
 
 public protocol TFYAnyOptional {
@@ -158,6 +165,7 @@ public enum TFYSwiftTypeMapper {
         case let data as Data:
             return .blob(data)
         case let date as Date:
+            try validateFinite(date.timeIntervalSinceReferenceDate, context: "Date")
             return .double(date.timeIntervalSinceReferenceDate)
         default:
             throw TFYSwiftDBError.unsupportedType("Column \(column.name) does not support value type \(type(of: rawValue)).")
@@ -206,6 +214,7 @@ public enum TFYSwiftTypeMapper {
         case let data as Data:
             return .blob(data)
         case let date as Date:
+            try validateFinite(date.timeIntervalSinceReferenceDate, context: "Date")
             return .double(date.timeIntervalSinceReferenceDate)
         default:
             throw TFYSwiftDBError.unsupportedType("Unsupported binding value \(type(of: rawValue)).")
@@ -213,16 +222,29 @@ public enum TFYSwiftTypeMapper {
     }
 
     public static func jsonObject<Model: TFYSwiftDBModel>(from row: [String: TFYSQLiteValue], schema: TFYSwiftModelSchema, modelType: Model.Type) throws -> [String: Any] {
-        let encoder = JSONEncoder()
-        let defaultData = try encoder.encode(Model.init())
-        guard let base = try JSONSerialization.jsonObject(with: defaultData) as? [String: Any] else {
-            throw TFYSwiftDBError.decoding("Unable to create base JSON dictionary for \(schema.modelName).")
-        }
+        try jsonObject(from: row, schema: schema, modelType: modelType, base: defaultJSONObject(for: modelType))
+    }
 
+    static func defaultJSONObject<Model: TFYSwiftDBModel>(for modelType: Model.Type) throws -> [String: Any] {
+        let defaultData = try JSONEncoder().encode(Model.init())
+        guard let base = try JSONSerialization.jsonObject(with: defaultData) as? [String: Any] else {
+            throw TFYSwiftDBError.decoding("Models must encode a top-level keyed object.")
+        }
+        return base
+    }
+
+    static func jsonObject<Model: TFYSwiftDBModel>(
+        from row: [String: TFYSQLiteValue], schema: TFYSwiftModelSchema,
+        modelType: Model.Type, base: [String: Any]
+    ) throws -> [String: Any] {
         var object = base
         for column in schema.persistedColumns {
             guard let sqliteValue = row[column.name] else { continue }
-            object[column.propertyName] = try jsonCompatibleValue(from: sqliteValue, column: column)
+            let codingKey = modelType.databaseCodingKeys[column.propertyName] ?? column.propertyName
+            guard column.isOptional || base[codingKey] != nil else {
+                throw TFYSwiftDBError.invalidModel("Persisted property '\(column.propertyName)' is absent from Codable output. Declare databaseCodingKeys or use @TFYIgnore.")
+            }
+            object[codingKey] = try jsonCompatibleValue(from: sqliteValue, column: column)
         }
         return object
     }
@@ -243,7 +265,7 @@ public enum TFYSwiftTypeMapper {
                 throw TFYSwiftDBError.decoding("JSON column \(column.name) expected TEXT storage.")
             }
             let data = Data(text.utf8)
-            return try JSONSerialization.jsonObject(with: data)
+            return try JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed])
         }
 
         let typeName = column.swiftType
@@ -252,17 +274,39 @@ public enum TFYSwiftTypeMapper {
             .replacingOccurrences(of: "Swift.", with: "")
         switch typeName {
         case "Int", "Int8", "Int16", "Int32", "Int64", "UInt", "UInt8", "UInt16", "UInt32", "UInt64":
-            return numericValue(from: sqliteValue)
+            switch sqliteValue {
+            case let .integer(value): return value
+            case let .double(value):
+                guard value.isFinite, let integer = Int64(exactly: value) else {
+                    throw TFYSwiftDBError.decoding("Column \(column.name) cannot be decoded as an integer without data loss.")
+                }
+                return integer
+            case let .text(value):
+                guard let integer = Int64(value) else {
+                    throw TFYSwiftDBError.decoding("Column \(column.name) contains invalid integer text.")
+                }
+                return integer
+            default: throw TFYSwiftDBError.decoding("Column \(column.name) has incompatible integer storage.")
+            }
         case "Bool":
-            return numericValue(from: sqliteValue) != 0
+            guard case let .integer(value) = sqliteValue, value == 0 || value == 1 else {
+                throw TFYSwiftDBError.decoding("Column \(column.name) expects a Boolean INTEGER (0 or 1).")
+            }
+            return value == 1
         case "Double", "Float":
-            return doubleValue(from: sqliteValue)
+            return try checkedDouble(from: sqliteValue, column: column.name)
         case "String":
-            return stringValue(from: sqliteValue)
+            guard case let .text(value) = sqliteValue else {
+                throw TFYSwiftDBError.decoding("Column \(column.name) expects TEXT storage.")
+            }
+            return value
         case "Data":
-            return dataValue(from: sqliteValue).base64EncodedString()
+            guard case let .blob(data) = sqliteValue else {
+                throw TFYSwiftDBError.decoding("Column \(column.name) expects BLOB storage.")
+            }
+            return data.base64EncodedString()
         case "Date":
-            return doubleValue(from: sqliteValue)
+            return try checkedDouble(from: sqliteValue, column: column.name)
         default:
             throw TFYSwiftDBError.decoding("Unsupported decode type \(column.swiftType) for column \(column.name).")
         }
@@ -340,6 +384,22 @@ public enum TFYSwiftTypeMapper {
         case .null:
             return Data()
         }
+    }
+
+    private nonisolated static func checkedDouble(from value: TFYSQLiteValue, column: String) throws -> Double {
+        let number: Double
+        switch value {
+        case let .integer(value): number = Double(value)
+        case let .double(value): number = value
+        case let .text(value):
+            guard let parsed = Double(value) else {
+                throw TFYSwiftDBError.decoding("Column \(column) contains invalid numeric text.")
+            }
+            number = parsed
+        default: throw TFYSwiftDBError.decoding("Column \(column) has incompatible numeric storage.")
+        }
+        guard number.isFinite else { throw TFYSwiftDBError.decoding("Column \(column) contains a non-finite number.") }
+        return number
     }
 
     private nonisolated static func unwrapOptionalTypeName(_ name: String) -> String {

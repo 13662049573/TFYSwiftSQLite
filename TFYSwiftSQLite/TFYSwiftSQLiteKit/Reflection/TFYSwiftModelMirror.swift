@@ -1,3 +1,10 @@
+//
+//  TFYSwiftModelMirror.swift
+//  TFYSwiftSQLiteKit
+//
+//  Created by 田风有 on 2021/5/9.
+//
+
 import Foundation
 
 public enum TFYSwiftModelMirror {
@@ -37,7 +44,7 @@ public enum TFYSwiftModelMirror {
         let mirror = Mirror(reflecting: model)
         var columns: [TFYSwiftColumn] = []
 
-        for child in mirror.children {
+        for child in reflectedChildren(mirror) {
             guard let label = child.label else { continue }
             let parsed = try parse(label: label, value: child.value)
             guard !parsed.annotation.isIgnored else { continue }
@@ -77,7 +84,7 @@ public enum TFYSwiftModelMirror {
             throw TFYSwiftDBError.invalidModel("\(String(describing: modelType)) declares more than one primary key. v1 supports a single primary key.")
         }
 
-        let duplicateColumnNames = Dictionary(grouping: columns, by: \.name)
+        let duplicateColumnNames = Dictionary(grouping: columns, by: { $0.name.lowercased() })
             .filter { $0.value.count > 1 }
             .keys
             .sorted()
@@ -85,6 +92,16 @@ public enum TFYSwiftModelMirror {
             throw TFYSwiftDBError.invalidModel(
                 "\(String(describing: modelType)) maps multiple properties to duplicate columns: \(duplicateColumnNames.joined(separator: ", "))."
             )
+        }
+
+        let properties = Set(columns.map(\.propertyName))
+        guard modelType.databaseCodingKeys.keys.allSatisfy(properties.contains),
+              modelType.databaseCodingKeys.values.allSatisfy({ !$0.isEmpty }) else {
+            throw TFYSwiftDBError.invalidModel("databaseCodingKeys must map declared persisted properties to non-empty Codable keys.")
+        }
+        let codingKeys = columns.map { modelType.databaseCodingKeys[$0.propertyName] ?? $0.propertyName }
+        guard Set(codingKeys).count == codingKeys.count else {
+            throw TFYSwiftDBError.invalidModel("Multiple persisted properties map to the same Codable key.")
         }
 
         for column in columns where column.isAutoIncrement {
@@ -113,7 +130,7 @@ public enum TFYSwiftModelMirror {
         for index in indexes {
             try validateIdentifier(index.name, kind: "index", modelType: modelType)
         }
-        let duplicateIndexNames = Dictionary(grouping: indexes, by: \.name).filter { $0.value.count > 1 }.keys.sorted()
+        let duplicateIndexNames = Dictionary(grouping: indexes, by: { $0.name.lowercased() }).filter { $0.value.count > 1 }.keys.sorted()
         guard duplicateIndexNames.isEmpty else {
             throw TFYSwiftDBError.invalidModel(
                 "\(String(describing: modelType)) declares duplicate index names: \(duplicateIndexNames.joined(separator: ", "))."
@@ -144,7 +161,7 @@ public enum TFYSwiftModelMirror {
         let mirror = Mirror(reflecting: model)
         var map: [String: Any] = [:]
 
-        for child in mirror.children {
+        for child in reflectedChildren(mirror) {
             guard let label = child.label else { continue }
             let parsed = try parse(label: label, value: child.value)
             map[parsed.propertyName] = parsed.rawValue
@@ -152,8 +169,14 @@ public enum TFYSwiftModelMirror {
         return map
     }
 
+    private static func reflectedChildren(_ mirror: Mirror) -> [Mirror.Child] {
+        let inherited = mirror.superclassMirror.map(reflectedChildren) ?? []
+        return inherited + Array(mirror.children)
+    }
+
     private static func parse(label: String, value: Any) throws -> (propertyName: String, annotation: TFYColumnAnnotation, rawValue: Any, valueType: Any.Type) {
-        var propertyName = label.hasPrefix("_") ? String(label.dropFirst()) : label
+        let isWrapped = value is any TFYAnyColumnWrapper
+        let propertyName = isWrapped && label.hasPrefix("_") ? String(label.dropFirst()) : label
         var annotation = TFYColumnAnnotation()
         var currentValue = value
         var currentType: Any.Type = type(of: value)
@@ -164,11 +187,7 @@ public enum TFYSwiftModelMirror {
             currentValue = wrapper.tfyWrappedValueAny
         }
 
-        if let nameOverride = annotation.nameOverride, !nameOverride.isEmpty {
-            propertyName = nameOverride
-        }
-
-        return (label.hasPrefix("_") ? String(label.dropFirst()) : propertyName, annotation, currentValue, currentType)
+        return (propertyName, annotation, currentValue, currentType)
     }
 
     private static func normalizeCompositeIndexes<Model: TFYSwiftDBModel>(

@@ -1,9 +1,25 @@
+//
+//  TFYSwiftORM.swift
+//  TFYSwiftSQLiteKit
+//
+//  Created by 田风有 on 2021/5/9.
+//
+
 import Foundation
 
 public enum TFYSwiftORM {
     @discardableResult
     public static func createTable<Model: TFYSwiftDBModel>(_ modelType: Model.Type) throws -> TFYSwiftMigrationReport {
         try TFYSwiftAutoTable.create(modelType)
+    }
+
+    /// Returns the generated primary-key row ID without mutating the Codable model.
+    @discardableResult
+    public static func insertReturningRowID<Model: TFYSwiftDBModel>(_ model: Model) throws -> Int64 {
+        let schema = try TFYSwiftModelMirror.schema(for: Model.self)
+        let payload = try persistPayload(for: model, schema: schema, orReplace: false)
+        let connection = try TFYSwiftDatabaseCenter.shared.open(named: schema.databaseName)
+        return try connection.executeReturningRowID(payload.sql, bindings: payload.bindings)
     }
 
     public static func insert<Model: TFYSwiftDBModel>(_ model: Model) throws {
@@ -30,6 +46,28 @@ public enum TFYSwiftORM {
         try connection.withTransaction {
             try persist(models, orReplace: true, connection: connection)
         }
+    }
+
+    /// Updates an existing primary-key row without INSERT OR REPLACE's implicit DELETE/cascade.
+    public static func upsert<Model: TFYSwiftDBModel>(_ model: Model) throws {
+        let schema = try TFYSwiftModelMirror.schema(for: Model.self)
+        guard let primaryKey = schema.primaryKeyColumn else {
+            throw TFYSwiftDBError.missingPrimaryKey("Upsert requires a primary key.")
+        }
+        let payload = try persistPayload(for: model, schema: schema, orReplace: false)
+        let assignments = schema.persistedColumns.filter { !$0.isPrimaryKey }.map {
+            let name = TFYSwiftSQL.escapeIdentifier($0.name)
+            return "\(name) = excluded.\(name)"
+        }
+        // DEFAULT VALUES cannot be followed by an UPSERT clause; an omitted autoincrement key is a new row.
+        if payload.sql.hasSuffix(" DEFAULT VALUES;") {
+            try persist(model, orReplace: false)
+            return
+        }
+        let conflict = assignments.isEmpty ? "DO NOTHING" : "DO UPDATE SET \(assignments.joined(separator: ", "))"
+        let sql = String(payload.sql.dropLast()) + " ON CONFLICT (\(TFYSwiftSQL.escapeIdentifier(primaryKey.name))) \(conflict);"
+        let connection = try TFYSwiftDatabaseCenter.shared.open(named: schema.databaseName)
+        try connection.execute(sql, bindings: payload.bindings)
     }
 
     public static func update<Model: TFYSwiftDBModel>(_ model: Model) throws {
@@ -101,10 +139,14 @@ public enum TFYSwiftORM {
         let connection = try TFYSwiftDatabaseCenter.shared.open(named: schema.databaseName)
         let sql = "SELECT * FROM \(TFYSwiftSQL.escapeIdentifier(schema.tableName))\(sqlSuffix ?? "");"
         let rows = try connection.query(sql, bindings: bindings)
+        guard !rows.isEmpty else { return [] }
+        let base = try TFYSwiftTypeMapper.defaultJSONObject(for: modelType)
+        let decoder = TFYSwiftTypeMapper.makeJSONDecoder()
         return try rows.map { row in
-            let object = try TFYSwiftTypeMapper.jsonObject(from: row, schema: schema, modelType: modelType)
+            let object = try TFYSwiftTypeMapper.jsonObject(from: row, schema: schema, modelType: modelType, base: base)
             let data = try JSONSerialization.data(withJSONObject: object)
-            return try TFYSwiftTypeMapper.makeJSONDecoder().decode(Model.self, from: data)
+            do { return try decoder.decode(Model.self, from: data) }
+            catch { throw TFYSwiftDBError.decoding("Failed to decode \(schema.modelName): \(error)") }
         }
     }
 

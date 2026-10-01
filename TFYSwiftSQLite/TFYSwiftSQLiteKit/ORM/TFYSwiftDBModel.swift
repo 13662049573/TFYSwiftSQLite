@@ -1,3 +1,10 @@
+//
+//  TFYSwiftDBModel.swift
+//  TFYSwiftSQLiteKit
+//
+//  Created by 田风有 on 2021/5/9.
+//
+
 import Foundation
 
 public protocol TFYSwiftDBModel: Codable {
@@ -7,6 +14,8 @@ public protocol TFYSwiftDBModel: Codable {
     static var databaseName: String { get }
     static var compositeIndexes: [TFYCompositeIndex] { get }
     static var migrationPolicy: TFYMigrationPolicy { get }
+    /// Swift property name → Codable key, when CodingKeys rename persisted properties.
+    static var databaseCodingKeys: [String: String] { get }
     static func willMigrate(using connection: TFYSwiftDBConnection, schema: TFYSwiftModelSchema) throws
     static func didMigrate(report: TFYSwiftMigrationReport, using connection: TFYSwiftDBConnection, schema: TFYSwiftModelSchema) throws
     static func renamedColumns(for schema: TFYSwiftModelSchema, existingColumns: [TFYSQLiteTableColumnInfo]) throws -> [String: String]
@@ -17,6 +26,7 @@ public protocol TFYSwiftDBModel: Codable {
 }
 
 public extension TFYSwiftDBModel {
+    static var databaseCodingKeys: [String: String] { [:] }
     static var tableName: String {
         String(describing: Self.self).lowercased()
     }
@@ -137,12 +147,25 @@ public extension TFYSwiftDBModel {
         try TFYSwiftORM.delete(Self.self, query)
     }
 
+    static func configureDatabase(_ configuration: TFYSwiftDBConfiguration?) throws {
+        try TFYSwiftDatabaseCenter.shared.configure(named: databaseName, configuration: configuration)
+    }
+
+    @discardableResult
+    func insertReturningRowID() throws -> Int64 {
+        try TFYSwiftORM.insertReturningRowID(self)
+    }
+
     func insert() throws {
         try TFYSwiftORM.insert(self)
     }
 
     func insertOrReplace() throws {
         try TFYSwiftORM.insertOrReplace(self)
+    }
+
+    func upsert() throws {
+        try TFYSwiftORM.upsert(self)
     }
 
     func update() throws {

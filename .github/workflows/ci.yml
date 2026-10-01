@@ -1,3 +1,10 @@
+#
+#  ci.yml
+#  TFYSwiftSQLiteKit
+#
+#  Created by 田风有 on 2021/5/9.
+#
+
 name: CI
 
 on:
@@ -10,12 +17,54 @@ concurrency:
 
 jobs:
   swift-package:
+    runs-on: macos-15
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        backend: [Standard, SQLCipher]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Swift 6.1 toolchain
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app
+      - name: Validate distributions
+        run: ruby Scripts/validate_distribution_layout.rb
+      - name: Debug tests and release build
+        env:
+          BACKEND: ${{ matrix.backend }}
+        run: |
+          if [ "$BACKEND" = SQLCipher ]; then
+            swift test --traits SQLCipher
+            swift build -c release --traits SQLCipher
+          else
+            swift test
+            swift build -c release
+          fi
+  legacy-package:
     runs-on: macos-14
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Debug build and tests
-        run: swift test --parallel
-      - name: Release build
-        run: swift build -c release
-
+      - name: System SQLite compatibility
+        run: |
+          legacy_dir=$(mktemp -d)
+          cp Package.swift "$legacy_dir/Package.swift"
+          mkdir -p "$legacy_dir/TFYSwiftSQLite"
+          cp -R TFYSwiftSQLite/TFYSwiftSQLiteKit "$legacy_dir/TFYSwiftSQLite/"
+          cp -R TFYSwiftSQLiteTests "$legacy_dir/"
+          swift test --package-path "$legacy_dir"
+          swift build -c release --package-path "$legacy_dir"
+  cocoapods:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+      - name: Install CocoaPods
+        run: gem install cocoapods -v 1.16.2 --no-document
+      - name: Validate all platforms and both backend runtime tests
+        run: ruby Scripts/validate_cocoapods.rb All

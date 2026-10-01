@@ -1,13 +1,21 @@
 // swift-tools-version: 5.9
+//
+//  Package.swift
+//  TFYSwiftSQLiteKit
+//
+//  Created by 田风有 on 2021/5/9.
+//
+
 import PackageDescription
 
 // SwiftPM versions this package through Git tags. This manifest describes the
-// source and resource layout shipped by release 1.0.7.
+// source and resource layout shipped by release 1.1.0.
 let libraryRoot = "TFYSwiftSQLite/TFYSwiftSQLiteKit"
 let librarySources = [
     "Annotation/TFYSwiftColumnAnnotations.swift",
     "Core/TFYSwiftDBConnection.swift",
     "Core/TFYSwiftDBError.swift",
+    "Core/TFYSwiftDBEncryption.swift",
     "Core/TFYSwiftDBLogging.swift",
     "Core/TFYSwiftDBStatement.swift",
     "Manager/TFYSwiftDatabaseCenter.swift",
@@ -30,9 +38,9 @@ let libraryResources = [
 let package = Package(
     name: "TFYSwiftSQLiteKit",
     platforms: [
-        .iOS(.v15),
+        .iOS(.v16),
         .macOS(.v13),
-        .tvOS(.v15),
+        .tvOS(.v16),
         .watchOS(.v9),
     ],
     products: [
@@ -58,6 +66,8 @@ let package = Package(
             sources: [
                 "TestModels.swift",
                 "TFYSwiftSQLiteKitTests.swift",
+                "TFYSwiftSQLiteHardeningTests.swift",
+                "TFYSwiftSQLiteEncryptionTests.swift",
             ]
         ),
     ]

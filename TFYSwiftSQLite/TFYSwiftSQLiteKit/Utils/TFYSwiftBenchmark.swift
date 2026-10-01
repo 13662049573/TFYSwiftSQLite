@@ -1,3 +1,10 @@
+//
+//  TFYSwiftBenchmark.swift
+//  TFYSwiftSQLiteKit
+//
+//  Created by 田风有 on 2021/5/9.
+//
+
 import Foundation
 
 public struct TFYSwiftBenchmarkReport: Sendable {
@@ -30,7 +37,7 @@ public enum TFYSwiftBenchmark {
         block: (Int) throws -> Void
     ) rethrows -> TFYSwiftBenchmarkReport {
         let start = CFAbsoluteTimeGetCurrent()
-        for index in 0..<iterations {
+        for index in 0..<max(iterations, 0) {
             try block(index)
         }
         return TFYSwiftBenchmarkReport(

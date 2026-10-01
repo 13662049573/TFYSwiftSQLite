@@ -1,3 +1,12 @@
+<!--
+//
+//  2026-07-23-demo-feature-catalog.md
+//  TFYSwiftSQLiteKit
+//
+//  Created by 田风有 on 2021/5/9.
+//
+-->
+
 # Interactive Demo Feature Catalog Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
