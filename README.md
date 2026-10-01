@@ -19,7 +19,7 @@ Model-first SQLite for Swift, with optional SQLCipher encryption.
 
 TFYSwiftSQLiteKit 是基于 Foundation 与 SQLite C API 的轻量同步 ORM。通过 `Codable` 模型和属性包装器定义数据，完成建表、CRUD、索引、事务与迁移；需要保护本地文件时，再启用 SQLCipher 后端，继续使用原有模型与查询代码。
 
-**当前版本：`1.1.0`**。GitHub tag 已创建，可通过 SwiftPM 接入。本次源码已完成本地验证；截至 2026-10-01 核对，CocoaPods `1.1.0` 尚未收录，使用 CocoaPods 体验本版请先采用本地 path 依赖。CocoaPods 已收录的 `1.0.7` 不包含本次加密 API。
+**当前版本：`1.1.0`**。GitHub Release 与 CocoaPods 均已发布，可通过 SwiftPM 或 CocoaPods 接入。正式 tag 已通过两种后端的四平台编译、导入及 macOS RuntimeTests 验证。发布与验证结果见 [验证记录](docs/Validation.md)。
 
 [快速上手](#快速上手) · [安装](#安装) · [加密接入](#sqlcipher-加密) · [体验 Demo](#体验-demo) · [常见问题](#常见问题)
 
@@ -119,18 +119,24 @@ platform :ios, '16.0'
 
 target 'YourApp' do
   use_frameworks!
-  # 当前 CocoaPods 1.1.0 尚未收录，路径指向本地克隆的库
-  pod 'TFYSwiftSQLiteKit/Standard', :path => '../TFYSwiftSQLite'
-  # 收录后改为：pod 'TFYSwiftSQLiteKit', '~> 1.1.0'
+  pod 'TFYSwiftSQLiteKit', '~> 1.1.0'
 end
 ```
 
 然后执行 `pod install`，使用生成的 `.xcworkspace` 打开项目。
 
-不指定 subspec 时默认使用 `Standard`。CocoaPods 收录 `1.1.0` 后，可使用远端版本依赖：
+不指定 subspec 时默认使用 `Standard`，也可显式选择：
 
 ```ruby
-pod 'TFYSwiftSQLiteKit', '~> 1.1.0'
+pod 'TFYSwiftSQLiteKit/Standard', '~> 1.1.0'
+```
+
+本地修改或调试时，将版本依赖替换为 `pod 'TFYSwiftSQLiteKit/Standard', :path => '../TFYSwiftSQLite'`。
+
+若更新索引后仍找不到 `1.1.0`，或当前网络访问 CocoaPods CDN 返回 403，可在 Podfile 顶部添加官方 Git Specs 源，再执行 `pod install --repo-update`：
+
+```ruby
+source 'https://github.com/CocoaPods/Specs.git'
 ```
 
 需要加密时选择 `TFYSwiftSQLiteKit/SQLCipher`；**Standard 与 SQLCipher 只选一个，避免同时接入两套后端**。详见 [后端选择](#1-选择加密后端)。
@@ -719,9 +725,8 @@ static func rebuildExpressions(
 **CocoaPods：** 将 Standard 依赖替换为：
 
 ```ruby
-pod 'TFYSwiftSQLiteKit/SQLCipher', :path => '../TFYSwiftSQLite'
-# CocoaPods 收录 1.1.0 后改为：
-# pod 'TFYSwiftSQLiteKit/SQLCipher', '~> 1.1.0'
+pod 'TFYSwiftSQLiteKit/SQLCipher', '~> 1.1.0'
+# 本地调试：pod 'TFYSwiftSQLiteKit/SQLCipher', :path => '../TFYSwiftSQLite'
 ```
 
 两个加密分发版本默认使用 SQLCipher 4 文件格式；引擎版本不同，重要存量数据仍需在实际宿主中演练兼容性。加密目标不额外链接系统 `sqlite3`，宿主其他数据库依赖也应统一后端，避免同进程 SQLite 同名 C 符号覆盖。
@@ -1159,7 +1164,7 @@ CocoaPods 与 SwiftPM 使用同一份完整 Swift 运行时源码与 Privacy Man
 
 ## 版本历史与发布
 
-### 1.1.0 · GitHub tag 已创建，CocoaPods 待收录
+### 1.1.0 · 已发布
 
 - 平台下限统一为 iOS 16、macOS 13、tvOS 16、watchOS 9。
 - 可选 SQLCipher 后端、按库名注册配置、密钥轮换与重开。
@@ -1201,7 +1206,7 @@ CocoaPods 与 SwiftPM 使用同一份完整 Swift 运行时源码与 Privacy Man
 
 SwiftPM 以 Git tag 解析版本；CocoaPods `s.version`、tag、Xcode marketing version 与 README 保持一致。
 
-`1.1.0` 的 GitHub tag 已创建。CocoaPods 发布前校验实际 tag 源码，确认通过后再上传。后续版本也应先提交/推送源码，再创建指向正确提交的 tag：
+`1.1.0` 已完成 GitHub 与 CocoaPods 发布。后续版本先提交/推送源码，再创建指向正确提交的 tag；在 tag 对应的干净 checkout 中验证并上传：
 
 ```bash
 # 校验实际远端 tag，而非当前工作目录

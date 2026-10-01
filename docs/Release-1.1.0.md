@@ -9,7 +9,7 @@
 
 # 1.1.0 发布步骤与升级说明
 
-准备日期：2026-10-01。上一远端版本为 1.0.7。本次版本为 **1.1.0**，GitHub tag 使用 `1.1.0`，与 Podspec 完全相同。当前尚未创建远端 tag 或上传 CocoaPods。
+准备日期：2026-10-01。上一远端版本为 1.0.7。本次版本为 **1.1.0**，GitHub tag 使用 `1.1.0`，与 Podspec 完全相同。GitHub Release 与 CocoaPods 均已发布，正式 tag 指向 `85fcf19d3d2522f5858a2cee5a9e754eb9b70467`；该 tag 的源码已通过远端全量验证。
 
 ## GitHub Release 正文
 
@@ -61,4 +61,4 @@ ruby Scripts/publish_cocoapods.rb
 
 发布后确认 CocoaPods 收录 `1.1.0`，并用独立宿主分别安装 Standard 与 SQLCipher 验证；GitHub Release 与 CocoaPods 发布是两个独立步骤。远端 CI、远端 tag 验证和 trunk 发布结果以实际执行为准，本地通过不能代替这些结果。
 
-本地结果及未覆盖范围见 [Validation.md](Validation.md)。
+本次已完成正式 tag 校验与发布确认，并通过官方 Git Specs 在两个独立 macOS 宿主安装、编译和运行 Standard / SQLCipher。提交时服务器返回内部错误，但后续核实 trunk 与官方 Specs 已收录，因此未重复发布。本机 CDN 返回 403 的备用接入方式见 README。完整结果及未覆盖范围见 [Validation.md](Validation.md)。

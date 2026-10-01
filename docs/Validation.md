@@ -7,9 +7,9 @@
 //
 -->
 
-# 1.1.0 本地验证记录
+# 1.1.0 验证与发布记录
 
-日期：2026-10-01。工具链：Xcode 27.0 (27A266a)、Apple Swift 6.4。源码尚未提交/打 tag/发布；以下记录是本地验证，CI 配置已更新但尚未在远端执行。
+日期：2026-10-01。工具链：Xcode 27.0 (27A266a)、Apple Swift 6.4。GitHub `1.1.0` Release 已创建，CocoaPods 已收录 `1.1.0`。以下记录包含本地与正式 tag 验证；未据此推断 GitHub Actions 的远端执行结果。
 
 | 验证 | 结果 | 范围 |
 | --- | --- | --- |
@@ -35,8 +35,26 @@ SQLCipher 行为测试验证了文件头和敏感字符串不以明文存储、�
 
 两种后端的测试共用 Library 中固定的测试数据库，应顺序执行；iOS 模拟器在独立容器中执行。CocoaPods RuntimeTests 仅声明 macOS 支持，其他三平台的 lint 完整编译/导入库、按平台声明跳过 RuntimeTests；iOS 行为测试使用仓库 Xcode 测试目标。此处“iOS 16”表示编译最低版本，本机实际运行环境为 iOS 27，未实测 iOS 16 系统运行环境。
 
-直接 `pod lib lint --subspec=SQLCipher` 在 Xcode 27 会因官方依赖原始部署目标低于 SDK 支持范围失败。`Scripts/validate_cocoapods.rb` 将 SQLCipher 及其 Privacy bundle 的目标对齐本库下限，保持构建、导入和 RuntimeTests 启用。远端 tag 校验使用 `All --remote`；`publish_cocoapods.rb` 在 trunk 的远端源码全量校验中使用同样设置。GitHub tag 尚未创建，因此远端 spec lint、CI 与 trunk 发布仍待执行。
+直接 `pod lib lint --subspec=SQLCipher` 在 Xcode 27 会因官方依赖原始部署目标低于 SDK 支持范围失败。`Scripts/validate_cocoapods.rb` 将 SQLCipher 及其 Privacy bundle 的目标对齐本库下限，保持构建、导入和 RuntimeTests 启用。远端 tag 校验使用 `All --remote`；`publish_cocoapods.rb` 在 trunk 的远端源码全量校验中使用同样设置。正式 tag `1.1.0` 的远端 spec lint 已通过，CocoaPods trunk 与官方 Specs 仓库均已收录；GitHub Actions 结果未在本次发布中核验。
 
 Xcode 的 AppIntents 无依赖提示、当前工具链 Swift 搜索路径提示及 XCTest 最低版本链接提示不影响本次构建/测试结果。负向错误密钥测试产生的 SQLCipher HMAC 错误输出符合预期。
 
 本次尚未进行真机、大文件/空间不足、App Group 跨进程、进程中断恢复、宿主账户与 Keychain 生命周期验收；这些限制不应从模拟器或编译通过推断为已验证。
+
+## 正式发布确认
+
+2026-10-01 使用独立目录下载正式 `1.1.0` tag，提交为 `85fcf19d3d2522f5858a2cee5a9e754eb9b70467`。当前主分支比该 tag 多出的 README、Demo 截图和个人窗口状态不影响发布的库源码、Podspec、脚本与测试。
+
+| 检查 | 结果 |
+| --- | --- |
+| `ruby Scripts/validate_cocoapods.rb All --remote` | 退出码 0；两种后端、四平台编译与导入、macOS RuntimeTests 通过 |
+| `ruby Scripts/publish_cocoapods.rb` | 上传前全量验证通过；提交后服务器返回内部错误，命令退出码 1；随后核实已正式收录，无重复提交 |
+| `pod trunk info TFYSwiftSQLiteKit` | 版本列表包含 `1.1.0` |
+| Trunk 官方 `specs/1.1.0` 接口 | 返回已发布 Podspec；内容与正式 tag Podspec 完全一致，仅发布工具附加 Swift 版本元数据 |
+| 官方 Specs 仓库 | 提交 `861eb09e1ea2188b5da06320b03a64faf5d3e1a6` 已添加 `TFYSwiftSQLiteKit 1.1.0` |
+| 独立 Standard 宿主 | 官方 Git Specs 版本安装、macOS Release 编译和运行通过；确认使用系统 SQLite，写入后关闭/重开仍可读取 |
+| 独立 SQLCipher 宿主 | 官方 Git Specs 版本安装、macOS Release 编译和运行通过；确认官方 SQLCipher `4.10.0 community`，加密配置写入后关闭/重开仍可读取 |
+
+本机访问 CocoaPods CDN 返回 403，首次 CDN 安装未解析到新版本；改用 `source 'https://github.com/CocoaPods/Specs.git'` 并更新索引后，两种宿主均成功安装。这是本次网络/索引环境的实际结果，未据此判断所有用户的 CDN 可用性。README 已提供备用源配置。两个独立宿主通过版本依赖安装，未使用本地 `:path` 或未发布的 Podspec。
+
+公开核验入口：[GitHub Release](https://github.com/13662049573/TFYSwiftSQLite/releases/tag/1.1.0)、[官方 Specs 文件](https://github.com/CocoaPods/Specs/blob/master/Specs/d/d/7/TFYSwiftSQLiteKit/1.1.0/TFYSwiftSQLiteKit.podspec.json)。
