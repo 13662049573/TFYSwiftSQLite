@@ -34,7 +34,7 @@ TFYSwiftSQLiteKit 是基于 Foundation 与 SQLite C API 的轻量同步 ORM。�
 
 适合离线笔记、收藏与阅读记录、业务数据缓存、可查询的本地配置、多数据库隔离，以及需要文件加密的本地数据。运行时不采集数据、不发起网络请求；两种分发方式均包含 `PrivacyInfo.xcprivacy`。
 
-如果项目需要关系对象图、复合主键 ORM、异步取消、多连接读池或任意复杂 schema 的自动迁移，请先阅读 [能力与边界](#能力与边界)，结合需求选择。
+更多架构细节与接入范围见 [能力与边界](#能力与边界)。
 
 ## 阅读导航
 
@@ -1085,6 +1085,12 @@ Swift 6.1 manifest 声明了带条件的 SQLCipher 目标依赖，解析阶段�
 
 打开 `TFYSwiftSQLite.xcodeproj`，运行 **TFYSwiftSQLite** scheme。
 
+<p align="center">
+  <img src="docs/images/demo-overview.png" alt="TFYSwiftSQLiteKit 1.1.0 Demo 实际运行截图：功能目录、建表、连接与 SQL 日志" width="320">
+</p>
+
+<p align="center"><em>真实示例目录：搜索 API、单独运行用例，或一键验证全部能力。</em></p>
+
 Demo 提供可搜索的分组目录、结果页、耗时与复制输出；**Run All** 顺序执行全部 44 个独立示例：
 
 | 主题 | 可以体验的能力 |
@@ -1208,4 +1214,3 @@ GitHub Release 与 CocoaPods 发布是独立步骤。完整升级说明、发布
 ## 许可
 
 TFYSwiftSQLiteKit 使用 [MIT License](LICENSE)。欢迎按许可证在个人与商业项目中使用、修改与分发。
-
