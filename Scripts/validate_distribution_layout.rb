@@ -128,7 +128,11 @@ project_versions = project.scan(/MARKETING_VERSION = ([^;]+);/).flatten.uniq
 unless project_versions == [version]
   abort_with.call("Xcode marketing versions differ: expected #{version}, got #{project_versions}")
 end
-abort_with.call("Release notes are missing for #{version}") unless File.file?(File.join(repo_root, "docs/Release-#{version}.md"))
+# Release notes are maintained in README after the standalone docs directory was removed.
+release_notes = readme[/^### #{Regexp.escape(version)}(?=[ \t]|\n)[^\n]*\n(.*?)(?=^[#]{1,3} |\z)/m, 1]
+if release_notes.nil? || release_notes.strip.empty?
+  abort_with.call("README release notes are missing or empty for #{version}")
+end
 unless [package, modern_package].all? { |manifest| manifest.include?("release #{version}.") }
   abort_with.call("Both manifests must describe release #{version}")
 end

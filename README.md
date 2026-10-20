@@ -19,7 +19,7 @@ Model-first SQLite for Swift, with optional SQLCipher encryption.
 
 TFYSwiftSQLiteKit 是基于 Foundation 与 SQLite C API 的轻量同步 ORM。通过 `Codable` 模型和属性包装器定义数据，完成建表、CRUD、索引、事务与迁移；需要保护本地文件时，再启用 SQLCipher 后端，继续使用原有模型与查询代码。
 
-**当前版本：`1.1.0`**。GitHub Release 与 CocoaPods 均已发布，可通过 SwiftPM 或 CocoaPods 接入。正式 tag 已通过两种后端的四平台编译、导入及 macOS RuntimeTests 验证。发布与验证结果见 [验证记录](docs/Validation.md)。
+**当前版本：`1.1.0`**。GitHub Release 与 CocoaPods 均已发布，可通过 SwiftPM 或 CocoaPods 接入。正式 tag 已通过两种后端的四平台编译、导入及 macOS RuntimeTests 验证。验证入口见 [验证与参与贡献](#验证与参与贡献)，发行说明见 [版本历史与发布](#版本历史与发布)。
 
 [快速上手](#快速上手) · [安装](#安装) · [加密接入](#sqlcipher-加密) · [体验 Demo](#体验-demo) · [常见问题](#常见问题)
 
@@ -30,7 +30,7 @@ TFYSwiftSQLiteKit 是基于 Foundation 与 SQLite C API 的轻量同步 ORM。�
 - **常用能力配套提供**：批量写入、分页、嵌套事务、预编译语句、逐行读取、备份、checkpoint 与完整性检查。
 - **迁移结果可检查**：返回实际执行的 SQL 和警告；迁移在事务中完成，失败时回滚。
 - **支持独立接入**：运行时不依赖 UIKit，UIKit / SwiftUI App 与其他 Apple 平台项目可通过 CocoaPods 或 SwiftPM 集成。
-- **有可运行的学习入口**：44 个交互式 Demo 和 59 项测试，涵盖普通存储与真实加密行为。验证范围见 [本地验证记录](docs/Validation.md)。
+- **有可运行的学习入口**：44 个交互式 Demo 和 59 项测试，涵盖普通存储与真实加密行为。验证范围见 [验证与参与贡献](#验证与参与贡献)。
 
 适合离线笔记、收藏与阅读记录、业务数据缓存、可查询的本地配置、多数据库隔离，以及需要文件加密的本地数据。运行时不采集数据、不发起网络请求；两种分发方式均包含 `PrivacyInfo.xcprivacy`。
 
@@ -1139,7 +1139,7 @@ ruby Scripts/validate_cocoapods.rb All
 
 当前测试共 59 项：Standard 跳过 5 项加密专用检查；SQLCipher 跳过 1 项后端不可用检查。CocoaPods 两种 subspec 提供同一批 macOS RuntimeTests；iOS 行为测试使用 Xcode 测试目标。CI 配置包含双后端、旧 manifest 和 CocoaPods 校验，远端结果以实际运行记录为准。
 
-新增 API/缺陷修复应提供有意义的行为验证；新增库或测试文件时同步 manifest、Podspec 与 Xcode 配置，并运行分发一致性检查。详细平台、工具链和未覆盖范围见 [Validation.md](docs/Validation.md)。
+新增 API/缺陷修复应提供有意义的行为验证；新增库或测试文件时同步 manifest、Podspec 与 Xcode 配置，并运行分发一致性检查。CI 从本 README 的版本历史中校验当前版本的非空发行说明，不依赖独立的 `docs/Release-版本号.md` 文件。
 
 ### 仓库结构
 
@@ -1216,7 +1216,7 @@ ruby Scripts/validate_cocoapods.rb All --remote
 ruby Scripts/publish_cocoapods.rb
 ```
 
-GitHub Release 与 CocoaPods 发布是独立步骤。完整升级说明、发布正文和顺序见 [Release-1.1.0.md](docs/Release-1.1.0.md)。
+GitHub Release 与 CocoaPods 发布是独立步骤。升级说明统一维护在上方对应版本的发行说明中。
 
 ## 许可
 
