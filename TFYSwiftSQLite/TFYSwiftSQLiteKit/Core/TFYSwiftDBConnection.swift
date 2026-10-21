@@ -159,10 +159,7 @@ public final class TFYSwiftDBConnection: @unchecked Sendable {
     public var changes: Int64 {
         withConnectionLock {
             guard let handle else { return 0 }
-            if #available(iOS 15.4, macOS 12.3, tvOS 15.4, watchOS 8.5, *) {
-                return sqlite3_changes64(handle)
-            }
-            return Int64(sqlite3_changes(handle))
+            return sqlite3_changes64(handle)
         }
     }
 
@@ -170,10 +167,7 @@ public final class TFYSwiftDBConnection: @unchecked Sendable {
     public var totalChanges: Int64 {
         withConnectionLock {
             guard let handle else { return 0 }
-            if #available(iOS 15.4, macOS 12.3, tvOS 15.4, watchOS 8.5, *) {
-                return sqlite3_total_changes64(handle)
-            }
-            return Int64(sqlite3_total_changes(handle))
+            return sqlite3_total_changes64(handle)
         }
     }
 

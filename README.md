@@ -19,7 +19,7 @@ Model-first SQLite for Swift, with optional SQLCipher encryption.
 
 TFYSwiftSQLiteKit 是基于 Foundation 与 SQLite C API 的轻量同步 ORM。通过 `Codable` 模型和属性包装器定义数据，完成建表、CRUD、索引、事务与迁移；需要保护本地文件时，再启用 SQLCipher 后端，继续使用原有模型与查询代码。
 
-**当前版本：`1.1.0`**。GitHub Release 与 CocoaPods 均已发布，可通过 SwiftPM 或 CocoaPods 接入。正式 tag 已通过两种后端的四平台编译、导入及 macOS RuntimeTests 验证。验证入口见 [验证与参与贡献](#验证与参与贡献)，发行说明见 [版本历史与发布](#版本历史与发布)。
+**当前版本：`1.1.1`**（源码与分发清单已对齐；正式 tag / GitHub Release / CocoaPods 待维护者发布）。可通过 SwiftPM 或 CocoaPods 接入。验证入口见 [验证与参与贡献](#验证与参与贡献)，发行说明见 [版本历史与发布](#版本历史与发布)。
 
 [快速上手](#快速上手) · [安装](#安装) · [加密接入](#sqlcipher-加密) · [体验 Demo](#体验-demo) · [常见问题](#常见问题)
 
@@ -72,7 +72,7 @@ TFYSwiftSQLiteKit 是基于 Foundation 与 SQLite C API 的轻量同步 ORM。�
 
 1. 打开 **File → Add Package Dependencies**。
 2. 输入 `https://github.com/13662049573/TFYSwiftSQLite.git`。
-3. 选择 `1.1.0` 或兼容的更新版本，添加产品 **TFYSwiftSQLiteKit**。
+3. 选择 `1.1.1` 或兼容的更新版本，添加产品 **TFYSwiftSQLiteKit**。
 4. 在使用位置添加 `import TFYSwiftSQLiteKit`。
 
 **其他 Swift Package：**
@@ -83,7 +83,7 @@ TFYSwiftSQLiteKit 是基于 Foundation 与 SQLite C API 的轻量同步 ORM。�
 dependencies: [
     .package(
         url: "https://github.com/13662049573/TFYSwiftSQLite.git",
-        from: "1.1.0"
+        from: "1.1.1"
     )
 ],
 targets: [
@@ -119,7 +119,7 @@ platform :ios, '16.0'
 
 target 'YourApp' do
   use_frameworks!
-  pod 'TFYSwiftSQLiteKit', '~> 1.1.0'
+  pod 'TFYSwiftSQLiteKit', '~> 1.1.1'
 end
 ```
 
@@ -128,12 +128,12 @@ end
 不指定 subspec 时默认使用 `Standard`，也可显式选择：
 
 ```ruby
-pod 'TFYSwiftSQLiteKit/Standard', '~> 1.1.0'
+pod 'TFYSwiftSQLiteKit/Standard', '~> 1.1.1'
 ```
 
 本地修改或调试时，将版本依赖替换为 `pod 'TFYSwiftSQLiteKit/Standard', :path => '../TFYSwiftSQLite'`。
 
-若更新索引后仍找不到 `1.1.0`，或当前网络访问 CocoaPods CDN 返回 403，可在 Podfile 顶部添加官方 Git Specs 源，再执行 `pod install --repo-update`：
+若更新索引后仍找不到 `1.1.1`，或当前网络访问 CocoaPods CDN 返回 403，可在 Podfile 顶部添加官方 Git Specs 源，再执行 `pod install --repo-update`：
 
 ```ruby
 source 'https://github.com/CocoaPods/Specs.git'
@@ -705,7 +705,7 @@ static func rebuildExpressions(
 ```swift
 .package(
     url: "https://github.com/13662049573/TFYSwiftSQLite.git",
-    from: "1.1.0",
+    from: "1.1.1",
     traits: ["SQLCipher"]
 ),
 ```
@@ -725,7 +725,7 @@ static func rebuildExpressions(
 **CocoaPods：** 将 Standard 依赖替换为：
 
 ```ruby
-pod 'TFYSwiftSQLiteKit/SQLCipher', '~> 1.1.0'
+pod 'TFYSwiftSQLiteKit/SQLCipher', '~> 1.1.1'
 # 本地调试：pod 'TFYSwiftSQLiteKit/SQLCipher', :path => '../TFYSwiftSQLite'
 ```
 
@@ -1093,7 +1093,7 @@ Swift 6.1 manifest 声明了带条件的 SQLCipher 目标依赖，解析阶段�
 打开 `TFYSwiftSQLite.xcodeproj`，运行 **TFYSwiftSQLite** scheme。
 
 <p align="center">
-  <img src="docs/images/demo-overview.png" alt="TFYSwiftSQLiteKit 1.1.0 Demo 实际运行截图：功能目录、建表、连接与 SQL 日志" width="320">
+  <img src="docs/images/demo-overview.png" alt="TFYSwiftSQLiteKit 1.1.1 Demo 实际运行截图：功能目录、建表、连接与 SQL 日志" width="320">
 </p>
 
 <p align="center"><em>真实示例目录：搜索 API、单独运行用例，或一键验证全部能力。</em></p>
@@ -1164,6 +1164,14 @@ CocoaPods 与 SwiftPM 使用同一份完整 Swift 运行时源码与 Privacy Man
 
 ## 版本历史与发布
 
+### 1.1.1 · 待发布
+
+- `TFYSwiftDBConnection` 的 `changes` / `totalChanges` 始终使用 `sqlite3_changes64` / `sqlite3_total_changes64`，移除低于平台下限的可用性分支。
+- Demo 使用 iOS 16 `UINavigationItem.searchBarPlacement` 与 `UIBarButtonItem` 的 `UIAction`，替代 `#selector` 目标动作。
+
+<details>
+<summary>查看更早版本</summary>
+
 ### 1.1.0 · 已发布
 
 - 平台下限统一为 iOS 16、macOS 13、tvOS 16、watchOS 9。
@@ -1174,9 +1182,6 @@ CocoaPods 与 SwiftPM 使用同一份完整 Swift 运行时源码与 Privacy Man
 - 完善 JSON 标量、下划线属性、继承反射、CodingKeys 与非法数值解码。
 - 加强索引定义、触发器和未建模约束检查，保护重建中的关联数据与自增序列。
 - 44 个 Demo、59 项测试以及 CocoaPods RuntimeTests。
-
-<details>
-<summary>查看更早版本</summary>
 
 ### 1.0.7
 
