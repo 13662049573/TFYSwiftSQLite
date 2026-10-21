@@ -52,15 +52,17 @@ final class ViewController: UITableViewController {
         navigationItem.rightBarButtonItem = UIBarButtonItem(
             title: "全部运行",
             style: .done,
-            target: self,
-            action: #selector(runAllTapped)
+            primaryAction: UIAction { [weak self] _ in
+                self?.runAllTapped()
+            }
         )
 
         let resetButton = UIBarButtonItem(
             image: UIImage(systemName: "trash"),
             style: .plain,
-            target: self,
-            action: #selector(resetTapped)
+            primaryAction: UIAction { [weak self] _ in
+                self?.resetTapped()
+            }
         )
         resetButton.accessibilityLabel = "重置演示数据库"
         navigationItem.leftBarButtonItem = resetButton
@@ -84,7 +86,7 @@ final class ViewController: UITableViewController {
         searchController.searchBar.placeholder = "搜索功能、API 或示例"
         searchController.searchBar.accessibilityIdentifier = "demo.catalog.search"
         navigationItem.searchController = searchController
-        navigationItem.hidesSearchBarWhenScrolling = false
+        navigationItem.searchBarPlacement = .stacked
         definesPresentationContext = true
     }
 
@@ -201,12 +203,12 @@ final class ViewController: UITableViewController {
 
     // MARK: - Actions
 
-    @objc private func runAllTapped() {
+    private func runAllTapped() {
         guard let runAllItem = DemoCatalog.items.first(where: \.isAggregate) else { return }
         showResult(for: runAllItem)
     }
 
-    @objc private func resetTapped() {
+    private func resetTapped() {
         let alert = UIAlertController(
             title: "重置演示数据？",
             message: "将关闭连接并删除 Demo 创建的所有本地数据库。",

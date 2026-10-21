@@ -35,14 +35,16 @@ final class DemoResultViewController: UIViewController {
     private lazy var rerunButton = UIBarButtonItem(
         image: UIImage(systemName: "arrow.clockwise"),
         style: .plain,
-        target: self,
-        action: #selector(runDemo)
+        primaryAction: UIAction { [weak self] _ in
+            self?.runDemo()
+        }
     )
     private lazy var copyButton = UIBarButtonItem(
         image: UIImage(systemName: "doc.on.doc"),
         style: .plain,
-        target: self,
-        action: #selector(copyOutput)
+        primaryAction: UIAction { [weak self] _ in
+            self?.copyOutput()
+        }
     )
 
     init(item: DemoItem) {
@@ -194,7 +196,7 @@ final class DemoResultViewController: UIViewController {
 
     // MARK: - Execution
 
-    @objc private func runDemo() {
+    private func runDemo() {
         setRunningState()
         let item = item
 
@@ -257,7 +259,7 @@ final class DemoResultViewController: UIViewController {
 
     // MARK: - Actions
 
-    @objc private func copyOutput() {
+    private func copyOutput() {
         UIPasteboard.general.string = [
             item.title,
             item.subtitle,
