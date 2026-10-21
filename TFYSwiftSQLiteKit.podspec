@@ -8,16 +8,17 @@
 Pod::Spec.new do |s|
   s.name             = 'TFYSwiftSQLiteKit'
 
-  s.version          = '1.1.1'
+  s.version          = '1.1.2'
 
-  s.summary          = 'Swift SQLite ORM with model migrations and optional SQLCipher encryption.'
+  s.summary          = 'Swift SQLite ORM with model migrations, backups and WAL checkpoints.'
 
   s.description      = <<-DESC
     TFYSwiftSQLiteKit maps Codable models to SQLite via reflection, supports @TFYPrimaryKey / @TFYColumn /
     indexes / JSON columns, type-safe and prepared queries, Date/Data/Bool scalar round-trips,
     transactional schema migration, serialized connections and transactions, WAL checkpoints,
-    consistent backups, optional SQLCipher encryption, key rotation and file-format exports,
-    and an App Store Privacy Manifest. CocoaPods and Swift Package Manager ship the same runtime.
+    consistent backups and an App Store Privacy Manifest. The CocoaPods distribution uses the
+    system SQLite backend; optional SQLCipher encryption is available through the Swift Package
+    Manager SQLCipher trait.
   DESC
   s.homepage         = 'https://github.com/13662049573/TFYSwiftSQLite'
 
@@ -74,24 +75,13 @@ Pod::Spec.new do |s|
   ]
 
   # Keep CocoaPods aligned file-for-file with the SwiftPM target.
+  # Since 1.1.2 CocoaPods ships only the system SQLite backend: the SQLCipher pod
+  # (4.10.0, final upstream release) declares deployment targets Xcode 27 rejects.
+  # SQLCipher encryption remains available through the SwiftPM `SQLCipher` trait.
   s.default_subspecs = 'Standard'
   s.subspec 'Standard' do |ss|
     ss.source_files = library_sources.map { |path| "#{kit}/#{path}" }
     ss.libraries = 'sqlite3'
-    ss.test_spec 'RuntimeTests' do |ts|
-      ts.platforms = { :osx => '13.0' }
-      ts.source_files = runtime_tests
-      ts.frameworks = 'XCTest'
-    end
-  end
-  s.subspec 'SQLCipher' do |ss|
-    ss.source_files = library_sources.map { |path| "#{kit}/#{path}" }
-    ss.dependency 'SQLCipher', '~> 4.10.0'
-    ss.pod_target_xcconfig = {
-      'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) TFY_SQLCIPHER',
-      'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) SQLITE_HAS_CODEC=1',
-      'OTHER_SWIFT_FLAGS' => '$(inherited) -Xcc -DSQLITE_HAS_CODEC=1'
-    }
     ss.test_spec 'RuntimeTests' do |ts|
       ts.platforms = { :osx => '13.0' }
       ts.source_files = runtime_tests

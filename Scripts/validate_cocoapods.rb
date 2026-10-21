@@ -9,7 +9,8 @@
 require_relative 'cocoapods_validation_support'
 
 backend = ARGV.shift || 'All'
-abort('Choose All, Standard or SQLCipher') unless %w[All Standard SQLCipher].include?(backend)
+# CocoaPods ships only the Standard backend since 1.1.2 (SQLCipher is SwiftPM-only).
+abort('Choose All or Standard') unless %w[All Standard].include?(backend)
 remote = ARGV.delete('--remote')
 # Publication checks must actually compile, import and run the available tests.
 abort('Build/import/test validation cannot be skipped') if ARGV.any? { |arg| arg.start_with?('--skip', '--quick', '--no-subspecs') }

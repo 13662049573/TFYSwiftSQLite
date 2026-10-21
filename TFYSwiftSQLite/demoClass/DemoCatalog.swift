@@ -108,7 +108,7 @@ enum DemoCatalog {
             let connection = try TFYSwiftDBConnection(path: ":memory:", databaseName: "cipher_version")
             defer { try? connection.close() }
             guard TFYSwiftDBConnection.supportsEncryption, let version = try connection.cipherVersion() else {
-                throw DemoAssertError("请启用 SQLCipher trait 或 SQLCipher Pod subspec。")
+                throw DemoAssertError("请通过 SwiftPM 启用 SQLCipher trait（CocoaPods 版本自 1.1.2 起仅提供系统 SQLite）。")
             }
             return ok(["SQLCipher: \(version)", "默认明文数据库仍可使用同一套接口。"])
         },

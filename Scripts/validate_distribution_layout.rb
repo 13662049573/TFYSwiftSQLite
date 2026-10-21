@@ -65,8 +65,8 @@ test_files = Dir.glob(File.join(repo_root, 'TFYSwiftSQLiteTests', '*.swift')).ma
   abort_with.call('SwiftPM test source list differs from complete test suite') unless listed == test_files
 end
 pod_tests = podspec[/runtime_tests = \[(.*?)\]/m, 1]&.scan(/'TFYSwiftSQLiteTests\/([^']+)'/)&.flatten&.sort
-unless pod_tests == test_files && podspec.scan("ss.test_spec 'RuntimeTests'").count == 2
-  abort_with.call('Each CocoaPods backend must include the complete runtime test suite')
+unless pod_tests == test_files && podspec.scan("ss.test_spec 'RuntimeTests'").count == 1
+  abort_with.call('The CocoaPods Standard backend must include the complete runtime test suite')
 end
 
 package_resource_block = package[/let libraryResources = \[(.*?)\]/m, 1]
@@ -87,10 +87,12 @@ unless modern_package.include?('.product(name: "SQLCipher", package: "SQLCipher.
        !modern_package.include?('.unsafeFlags')
   abort_with.call("Modern SwiftPM must select SQLCipher explicitly without system SQLite or unsafe flags")
 end
+# Since 1.1.2 CocoaPods ships only the Standard (system SQLite) backend; SQLCipher is SwiftPM-only.
 unless podspec.include?("s.default_subspecs = 'Standard'") &&
-       podspec.include?("ss.dependency 'SQLCipher', '~> 4.10.0'") &&
-       podspec.scan('ss.source_files = library_sources.map').count == 2
-  abort_with.call("CocoaPods must include both complete, mutually exclusive backend subspecs")
+       !podspec.include?("dependency 'SQLCipher'") &&
+       !podspec.include?("s.subspec 'SQLCipher'") &&
+       podspec.scan('ss.source_files = library_sources.map').count == 1
+  abort_with.call("CocoaPods must ship exactly one complete Standard subspec without SQLCipher")
 end
 unless package_resources == resource_files
   abort_with.call("SwiftPM resources differ: expected #{resource_files}, got #{package_resources}")
@@ -182,8 +184,8 @@ hook = read.call('Scripts/sqlcipher_platforms.rb')
   end
 end
 test_macos_versions = podspec.scan(/ts\.platforms\s*=\s*\{\s*:osx\s*=>\s*'([^']+)'\s*\}/).flatten
-unless test_macos_versions == [expected_platforms['macos']] * 2
-  abort_with.call('Both CocoaPods RuntimeTests must match the library macOS floor')
+unless test_macos_versions == [expected_platforms['macos']]
+  abort_with.call('CocoaPods RuntimeTests must match the library macOS floor')
 end
 unless pod_platform_versions == expected_platforms
   abort_with.call("CocoaPods platforms differ: expected #{expected_platforms}, got #{pod_platform_versions}")

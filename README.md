@@ -19,14 +19,14 @@ Model-first SQLite for Swift, with optional SQLCipher encryption.
 
 TFYSwiftSQLiteKit 是基于 Foundation 与 SQLite C API 的轻量同步 ORM。通过 `Codable` 模型和属性包装器定义数据，完成建表、CRUD、索引、事务与迁移；需要保护本地文件时，再启用 SQLCipher 后端，继续使用原有模型与查询代码。
 
-**当前版本：`1.1.1`**（源码与分发清单已对齐；正式 tag / GitHub Release / CocoaPods 待维护者发布）。可通过 SwiftPM 或 CocoaPods 接入。验证入口见 [验证与参与贡献](#验证与参与贡献)，发行说明见 [版本历史与发布](#版本历史与发布)。
+**当前版本：`1.1.2`**。可通过 SwiftPM 或 CocoaPods 接入；**SQLCipher 加密仅通过 SwiftPM 提供**，CocoaPods 版本自 1.1.2 起只包含系统 SQLite 后端。验证入口见 [验证与参与贡献](#验证与参与贡献)，发行说明见 [版本历史与发布](#版本历史与发布)。
 
 [快速上手](#快速上手) · [安装](#安装) · [加密接入](#sqlcipher-加密) · [体验 Demo](#体验-demo) · [常见问题](#常见问题)
 
 ## 为什么选择它
 
 - **模型即表结构**：普通属性自动映射，主键、索引、默认值与 JSON 列通过包装器声明，减少重复 SQL。
-- **按需选择加密**：默认系统 SQLite；SQLCipher 与明文模式共享模块名、模型、CRUD、查询和迁移接口。
+- **按需选择加密**：默认系统 SQLite；SQLCipher（SwiftPM trait）与明文模式共享模块名、模型、CRUD、查询和迁移接口。
 - **常用能力配套提供**：批量写入、分页、嵌套事务、预编译语句、逐行读取、备份、checkpoint 与完整性检查。
 - **迁移结果可检查**：返回实际执行的 SQL 和警告；迁移在事务中完成，失败时回滚。
 - **支持独立接入**：运行时不依赖 UIKit，UIKit / SwiftUI App 与其他 Apple 平台项目可通过 CocoaPods 或 SwiftPM 集成。
@@ -59,10 +59,10 @@ TFYSwiftSQLiteKit 是基于 Foundation 与 SQLite C API 的轻量同步 ORM。�
 | watchOS | 9.0 |
 | SwiftPM Standard 明文模式 | Swift 5.9+ |
 | SwiftPM SQLCipher trait | Swift 6.1+，使用 `Package@swift-6.1.swift` |
-| CocoaPods | Podspec 声明 Swift 5.9；按所选后端安装 |
+| CocoaPods | Podspec 声明 Swift 5.9；仅系统 SQLite（Standard）后端 |
 | 库产品与导入名 | `TFYSwiftSQLiteKit` |
 
-所有平台下限已同步到两份 Package、Podspec、SQLCipher 示例与部署目标校验；CocoaPods 的 macOS RuntimeTests 也使用 macOS 13。示例 iOS App 最低支持 iOS 16。
+所有平台下限已同步到两份 Package、Podspec 与 SQLCipher 示例；CocoaPods 的 macOS RuntimeTests 也使用 macOS 13。示例 iOS App 最低支持 iOS 16。
 
 ## 安装
 
@@ -72,7 +72,7 @@ TFYSwiftSQLiteKit 是基于 Foundation 与 SQLite C API 的轻量同步 ORM。�
 
 1. 打开 **File → Add Package Dependencies**。
 2. 输入 `https://github.com/13662049573/TFYSwiftSQLite.git`。
-3. 选择 `1.1.1` 或兼容的更新版本，添加产品 **TFYSwiftSQLiteKit**。
+3. 选择 `1.1.2` 或兼容的更新版本，添加产品 **TFYSwiftSQLiteKit**。
 4. 在使用位置添加 `import TFYSwiftSQLiteKit`。
 
 **其他 Swift Package：**
@@ -83,7 +83,7 @@ TFYSwiftSQLiteKit 是基于 Foundation 与 SQLite C API 的轻量同步 ORM。�
 dependencies: [
     .package(
         url: "https://github.com/13662049573/TFYSwiftSQLite.git",
-        from: "1.1.1"
+        from: "1.1.2"
     )
 ],
 targets: [
@@ -119,7 +119,7 @@ platform :ios, '16.0'
 
 target 'YourApp' do
   use_frameworks!
-  pod 'TFYSwiftSQLiteKit', '~> 1.1.1'
+  pod 'TFYSwiftSQLiteKit', '~> 1.1.2'
 end
 ```
 
@@ -128,18 +128,20 @@ end
 不指定 subspec 时默认使用 `Standard`，也可显式选择：
 
 ```ruby
-pod 'TFYSwiftSQLiteKit/Standard', '~> 1.1.1'
+pod 'TFYSwiftSQLiteKit/Standard', '~> 1.1.2'
 ```
 
 本地修改或调试时，将版本依赖替换为 `pod 'TFYSwiftSQLiteKit/Standard', :path => '../TFYSwiftSQLite'`。
 
-若更新索引后仍找不到 `1.1.1`，或当前网络访问 CocoaPods CDN 返回 403，可在 Podfile 顶部添加官方 Git Specs 源，再执行 `pod install --repo-update`：
+若更新索引后仍找不到 `1.1.2`，或当前网络访问 CocoaPods CDN 返回 403，可在 Podfile 顶部添加官方 Git Specs 源，再执行 `pod install --repo-update`：
 
 ```ruby
 source 'https://github.com/CocoaPods/Specs.git'
 ```
 
-需要加密时选择 `TFYSwiftSQLiteKit/SQLCipher`；**Standard 与 SQLCipher 只选一个，避免同时接入两套后端**。详见 [后端选择](#1-选择加密后端)。
+> **CocoaPods 与加密（1.1.2 起）**：CocoaPods 版本已移除 `SQLCipher` subspec，只提供系统 SQLite（Standard）后端。原因是 CocoaPods 上的 SQLCipher Pod（最终版 4.10.0）声明的 iOS 12 / macOS 10.13 / tvOS 12 / watchOS 7 部署目标已被 Xcode 27 拒绝。**需要加密的 CocoaPods 用户请改用 SwiftPM 并启用 `SQLCipher` trait**（或在自己的工程中自行集成 SQLCipher）。详见 [后端选择](#1-选择加密后端)。
+>
+> **CocoaPods & encryption (since 1.1.2):** the CocoaPods distribution no longer ships the `SQLCipher` subspec and uses system SQLite only, because the SQLCipher pod (final release 4.10.0) declares deployment targets that Xcode 27 rejects. If you need encryption, use Swift Package Manager with the `SQLCipher` trait (or integrate SQLCipher yourself).
 
 ## 快速上手
 
@@ -698,14 +700,14 @@ static func rebuildExpressions(
 | SwiftPM Standard | 默认配置 | 系统 SQLite |
 | SwiftPM SQLCipher | Swift 6.1+，`SQLCipher` trait | 官方 SQLCipher 4.19.0 xcframework |
 | CocoaPods Standard | 默认或 `/Standard` | 系统 SQLite |
-| CocoaPods SQLCipher | `/SQLCipher` subspec | 官方 SQLCipher 4.10.0 源码 |
+| CocoaPods SQLCipher | 1.1.2 起不再提供，请改用 SwiftPM trait | — |
 
 **SwiftPM：** 将宿主 manifest 的工具链版本提升到 `// swift-tools-version: 6.1`，再选择 trait：
 
 ```swift
 .package(
     url: "https://github.com/13662049573/TFYSwiftSQLite.git",
-    from: "1.1.1",
+    from: "1.1.2",
     traits: ["SQLCipher"]
 ),
 ```
@@ -722,47 +724,9 @@ static func rebuildExpressions(
 
 产品和 `import TFYSwiftSQLiteKit` 均不变。Xcode 支持 package traits 的版本可在包设置中选择；仓库 Demo 通过 [Examples/SQLCipherDemo](Examples/SQLCipherDemo/Package.swift) 包装 Package 启用 trait，可参考其集成方式。底层桥接只处理 key/rekey，不需要给消费方添加 unsafe Swift 编译标志。
 
-**CocoaPods：** 将 Standard 依赖替换为：
+**CocoaPods：** 自 1.1.2 起不再提供 `/SQLCipher` subspec（SQLCipher 4.10.0 Pod 的部署目标不被 Xcode 27 接受）。需要加密请改用上面的 SwiftPM `SQLCipher` trait；CocoaPods 用户也可在自己的工程中自行集成 SQLCipher。
 
-```ruby
-pod 'TFYSwiftSQLiteKit/SQLCipher', '~> 1.1.1'
-# 本地调试：pod 'TFYSwiftSQLiteKit/SQLCipher', :path => '../TFYSwiftSQLite'
-```
-
-两个加密分发版本默认使用 SQLCipher 4 文件格式；引擎版本不同，重要存量数据仍需在实际宿主中演练兼容性。加密目标不额外链接系统 `sqlite3`，宿主其他数据库依赖也应统一后端，避免同进程 SQLite 同名 C 符号覆盖。
-
-<details>
-<summary><strong>Xcode 27 + CocoaPods：SQLCipher 部署目标配置</strong></summary>
-
-SQLCipher 4.10.0 Pod 及其 Privacy bundle 原始部署目标低于 Xcode 27 SDK 支持范围。在宿主已有 `post_install` 中合并以下设置，仅提升 SQLCipher 相关目标：
-
-```ruby
-post_install do |installer|
-  minimums = {
-    'IPHONEOS_DEPLOYMENT_TARGET' => '16.0',
-    'MACOSX_DEPLOYMENT_TARGET' => '13.0',
-    'TVOS_DEPLOYMENT_TARGET' => '16.0',
-    'WATCHOS_DEPLOYMENT_TARGET' => '9.0'
-  }
-
-  installer.pods_project.targets.each do |target|
-    next unless target.name == 'SQLCipher' || target.name.start_with?('SQLCipher-')
-
-    target.build_configurations.each do |config|
-      minimums.each do |setting, minimum|
-        current = config.build_settings[setting]
-        if current && Gem::Version.new(current) < Gem::Version.new(minimum)
-          config.build_settings[setting] = minimum
-        end
-      end
-    end
-  end
-end
-```
-
-已有 `post_install` 时合并内容，不另建重复 hook。仓库的 [sqlcipher_platforms.rb](Scripts/sqlcipher_platforms.rb) 提供同等逻辑；本地/远端校验和发布脚本应用相同设置，保留编译、导入与可用 RuntimeTests，不修改官方源码。
-
-</details>
+SwiftPM 加密版本默认使用 SQLCipher 4 文件格式；重要存量数据仍需在实际宿主中演练兼容性。加密目标不额外链接系统 `sqlite3`，宿主其他数据库依赖也应统一后端，避免同进程 SQLite 同名 C 符号覆盖。
 
 ### 2. 首次访问前注册密钥
 
@@ -1070,7 +1034,7 @@ Swift 初始值不等于 SQL DEFAULT。非空表新增必填列需要 `@TFYDefau
 
 ### encryptionUnavailable 或错误密钥怎样排查？
 
-确认选择了 SQLCipher trait/subspec，而不只是导入模块；再检查实际 `cipherVersion()`、文件路径、密钥字节与 `.version3/.version4` 格式。错误密钥与损坏文件可能都表现为加密读取失败，不要因此自动删除原库。
+确认通过 SwiftPM 启用了 SQLCipher trait（CocoaPods 1.1.2 起不含 SQLCipher），而不只是导入模块；再检查实际 `cipherVersion()`、文件路径、密钥字节与 `.version3/.version4` 格式。错误密钥与损坏文件可能都表现为加密读取失败，不要因此自动删除原库。
 
 ### SwiftPM 明文模式为什么也可能下载 SQLCipher？
 
@@ -1093,7 +1057,7 @@ Swift 6.1 manifest 声明了带条件的 SQLCipher 目标依赖，解析阶段�
 打开 `TFYSwiftSQLite.xcodeproj`，运行 **TFYSwiftSQLite** scheme。
 
 <p align="center">
-  <img src="docs/images/demo-overview.png" alt="TFYSwiftSQLiteKit 1.1.1 Demo 实际运行截图：功能目录、建表、连接与 SQL 日志" width="320">
+  <img src="docs/images/demo-overview.png" alt="TFYSwiftSQLiteKit 1.1.2 Demo 实际运行截图：功能目录、建表、连接与 SQL 日志" width="320">
 </p>
 
 <p align="center"><em>真实示例目录：搜索 API、单独运行用例，或一键验证全部能力。</em></p>
@@ -1133,11 +1097,11 @@ swift build -c release
 swift test --traits SQLCipher --scratch-path .build-sqlcipher
 swift build -c release --traits SQLCipher --scratch-path .build-sqlcipher
 
-# CocoaPods 四平台编译/导入；两种后端的 macOS RuntimeTests
+# CocoaPods 四平台编译/导入；Standard 后端的 macOS RuntimeTests
 ruby Scripts/validate_cocoapods.rb All
 ```
 
-当前测试共 59 项：Standard 跳过 5 项加密专用检查；SQLCipher 跳过 1 项后端不可用检查。CocoaPods 两种 subspec 提供同一批 macOS RuntimeTests；iOS 行为测试使用 Xcode 测试目标。CI 配置包含双后端、旧 manifest 和 CocoaPods 校验，远端结果以实际运行记录为准。
+当前测试共 59 项：Standard 跳过 5 项加密专用检查；SQLCipher 跳过 1 项后端不可用检查。CocoaPods（Standard）提供同一批 macOS RuntimeTests；iOS 行为测试使用 Xcode 测试目标。CI 配置包含双后端、旧 manifest 和 CocoaPods 校验，远端结果以实际运行记录为准。
 
 新增 API/缺陷修复应提供有意义的行为验证；新增库或测试文件时同步 manifest、Podspec 与 Xcode 配置，并运行分发一致性检查。CI 从本 README 的版本历史中校验当前版本的非空发行说明，不依赖独立的 `docs/Release-版本号.md` 文件。
 
@@ -1164,7 +1128,13 @@ CocoaPods 与 SwiftPM 使用同一份完整 Swift 运行时源码与 Privacy Man
 
 ## 版本历史与发布
 
-### 1.1.1 · 待发布
+### 1.1.2 · 已发布
+
+- **CocoaPods 移除 `SQLCipher` subspec**：CocoaPods 上的 SQLCipher Pod（最终版 4.10.0）声明 iOS 12 / macOS 10.13 / tvOS 12 / watchOS 7，被 Xcode 27 拒绝，导致无法通过 trunk 校验。CocoaPods 版本现仅提供系统 SQLite（`Standard`，默认）后端。
+- **SwiftPM 不变**：Swift 6.1+ 的 `SQLCipher` trait（官方 SQLCipher.swift 4.19.0）继续提供加密、密钥轮换与导出能力。需要加密的 CocoaPods 用户请改用 SwiftPM，或在自己的工程中自行集成 SQLCipher。
+- 运行时源码与 API 与 1.1.1 相同。
+
+### 1.1.1 · 仅 Git tag（未上 CocoaPods trunk）
 
 - `TFYSwiftDBConnection` 的 `changes` / `totalChanges` 始终使用 `sqlite3_changes64` / `sqlite3_total_changes64`，移除低于平台下限的可用性分支。
 - Demo 使用 iOS 16 `UINavigationItem.searchBarPlacement` 与 `UIBarButtonItem` 的 `UIAction`，替代 `#selector` 目标动作。
@@ -1211,7 +1181,7 @@ CocoaPods 与 SwiftPM 使用同一份完整 Swift 运行时源码与 Privacy Man
 
 SwiftPM 以 Git tag 解析版本；CocoaPods `s.version`、tag、Xcode marketing version 与 README 保持一致。
 
-`1.1.0` 已完成 GitHub 与 CocoaPods 发布。后续版本先提交/推送源码，再创建指向正确提交的 tag；在 tag 对应的干净 checkout 中验证并上传：
+`1.1.2` 已完成 GitHub 与 CocoaPods 发布。后续版本先提交/推送源码，再创建指向正确提交的 tag；在 tag 对应的干净 checkout 中验证并上传：
 
 ```bash
 # 校验实际远端 tag，而非当前工作目录

@@ -31,7 +31,7 @@ public enum TFYSwiftDBError: Error, CustomStringConvertible, LocalizedError, Sen
     public var description: String {
         switch self {
         case .encryptionUnavailable:
-            return "SQLCipher backend is unavailable. Enable the SQLCipher package trait or CocoaPods subspec."
+            return "SQLCipher backend is unavailable. Enable the SQLCipher package trait (SwiftPM, Swift 6.1+); the CocoaPods distribution ships system SQLite only."
         case let .openDatabase(path, message):
             return "Failed to open database at \(path): \(message)"
         case let .closeDatabase(path, message):
